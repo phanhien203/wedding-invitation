@@ -1,33 +1,71 @@
 import Head from "next/head";
+import { GetServerSideProps } from "next";
 import MainLayout from "@/layouts/MainLayout";
-import Section from "@/components/ui/Section";
+import HeroSection from "@/components/sections/HeroSection";
+import CoupleSection from "@/components/sections/CoupleSection";
+import LoveStorySection from "@/components/sections/LoveStorySection";
+import GallerySection from "@/components/sections/GallerySection";
+import CountdownSection from "@/components/sections/CountdownSection";
+import EventSection from "@/components/sections/EventSection";
+import MapSection from "@/components/sections/MapSection";
+import GiftSection from "@/components/sections/GiftSection";
+import RsvpSection from "@/components/sections/RsvpSection";
+import WishesSection from "@/components/sections/WishesSection";
+import FooterSection from "@/components/sections/FooterSection";
+import { readWeddingConfig, readWishes } from "@/lib/data";
+import type { WeddingConfig, Wish } from "@/types";
 
-export default function Home() {
+interface HomeProps {
+  wedding: WeddingConfig;
+  wishes: Wish[];
+}
+
+export default function Home({ wedding, wishes }: HomeProps) {
+  const title = `${wedding.brideName} & ${wedding.groomName} · Wedding Invitation`;
+  const description = `Thiệp mời đám cưới ${wedding.brideName} & ${wedding.groomName}`;
+
   return (
     <>
       <Head>
-        <title>Wedding Invitation</title>
-        <meta name="description" content="Our wedding invitation" />
-        <meta property="og:title" content="Wedding Invitation" />
-        <meta property="og:description" content="Our wedding invitation" />
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />
+        <meta property="og:image" content={wedding.coverImage} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <MainLayout>
-        <Section className="flex min-h-screen items-center justify-center text-center">
-          <div className="animate-fade-up">
-            <p className="mb-3 text-sm uppercase tracking-[0.3em] text-gold">
-              Save the date
-            </p>
-            <h1 className="text-4xl font-semibold sm:text-6xl">
-              Bride &amp; Groom
-            </h1>
-            <p className="mt-4 text-ink/60">
-              The wedding invitation is being prepared.
-            </p>
-          </div>
-        </Section>
+        <HeroSection
+          brideName={wedding.brideName}
+          groomName={wedding.groomName}
+          weddingDate={wedding.weddingDate}
+          coverImage={wedding.coverImage}
+        />
+        <CoupleSection bride={wedding.bride} groom={wedding.groom} />
+        <LoveStorySection timeline={wedding.timeline} />
+        <GallerySection images={wedding.gallery} />
+        <CountdownSection weddingDate={wedding.weddingDate} />
+        <EventSection events={wedding.events} />
+        <MapSection venue={wedding.venue} />
+        <GiftSection gift={wedding.gift} />
+        <RsvpSection />
+        <WishesSection initialWishes={wishes} />
+        <FooterSection
+          musicSrc={wedding.music}
+          brideName={wedding.brideName}
+          groomName={wedding.groomName}
+        />
       </MainLayout>
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps<HomeProps> = async () => {
+  const [wedding, wishes] = await Promise.all([
+    readWeddingConfig(),
+    readWishes(),
+  ]);
+
+  return { props: { wedding, wishes } };
+};
