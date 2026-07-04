@@ -22,4 +22,17 @@
   .container-page {
     @apply mx-auto w-full max-w-5xl px-5 sm:px-6 lg:px-8;
   }
+
+  .gallery-swiper .swiper-pagination-bullet {
+    @apply bg-blush-300 opacity-60;
+  }
+
+  .gallery-swiper .swiper-pagination-bullet-active {
+    @apply bg-blush-400 opacity-100;
+  }
+
+  .gallery-swiper .swiper-button-next,
+  .gallery-swiper .swiper-button-prev {
+    @apply text-blush-400;
+  }
 }
