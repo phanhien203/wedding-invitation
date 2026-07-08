@@ -6,7 +6,7 @@ import Head from "next/head";
 import Image from "next/image";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import Gallery from "@/components/Gallery";
+import AlbumSlider from "@/components/AlbumSlider";
 
 interface HomeProps {
   images: string[];
@@ -86,12 +86,12 @@ export default function Home({ images }: HomeProps) {
                 Album ảnh
               </h2>
               <p className="mx-auto mt-4 max-w-md text-sm text-ink/60">
-                Nhấn vào ảnh để xem chi tiết, phóng to và tải về.
+                Những khoảnh khắc đáng nhớ của chúng tôi.
               </p>
             </div>
 
             <div data-aos="fade-up" data-aos-delay="150">
-              <Gallery images={images} />
+              <AlbumSlider images={images} />
             </div>
           </div>
         </section>
