@@ -5,7 +5,6 @@ import type { GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import AOS from "aos";
-import "aos/dist/aos.css";
 import AlbumSlider from "@/components/AlbumSlider";
 
 interface HomeProps {
@@ -86,7 +85,7 @@ export default function Home({ images }: HomeProps) {
                 Album ảnh
               </h2>
               <p className="mx-auto mt-4 max-w-md text-sm text-ink/60">
-                Những khoảnh khắc đáng nhớ của chúng tôi.
+                Nhấn vào ảnh để xem chi tiết và phóng to.
               </p>
             </div>
 

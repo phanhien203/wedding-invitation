@@ -1,4 +1,9 @@
 import "@/styles/globals.css";
+import "aos/dist/aos.css";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import "swiper/css/zoom";
 import type { AppProps } from "next/app";
 import { Cormorant_Garamond, Be_Vietnam_Pro } from "next/font/google";
 
