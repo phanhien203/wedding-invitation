@@ -1,0 +1,106 @@
+{
+  "brideName": "Thu Hiền",
+  "groomName": "Duy Đạt",
+  "weddingDate": "2026-08-02T07:00:00",
+  "coverImage": "/images/welcome.jpg",
+  "bride": {
+    "name": "Phan Thi Thu Hiền",
+    "intro": "Yêu thích hoa, sách và những buổi chiều yên bình bên gia đình.",
+    "photo": "/album/DEE_8301.jpg"
+  },
+  "groom": {
+    "name": "Thái Duy Đạt",
+    "intro": "Thích du lịch, nhiếp ảnh và luôn tìm kiếm những khoảnh khắc đẹp.",
+    "photo": "/album/DEE_8771.jpg"
+  },
+  "timeline": [
+    {
+      "id": "1",
+      "date": "2020",
+      "title": "Lần đầu gặp gỡ",
+      "description": "Chúng mình gặp nhau tại một buổi họp mặt bạn bè.",
+      "image": "/album/DEE_8614.jpg"
+    },
+    {
+      "id": "2",
+      "date": "2022",
+      "title": "Hẹn hò",
+      "description": "Những chuyến đi nhỏ đã gắn kết chúng mình hơn.",
+      "image": "/album/DEE_8667.jpg"
+    },
+    {
+      "id": "3",
+      "date": "2025",
+      "title": "Lời cầu hôn",
+      "description": "Một ngày đẹp trời, anh đã quỳ gối và hỏi em.",
+      "image": "/album/DEE_8584.jpg"
+    }
+  ],
+  "gallery": [
+    "/album/DEE_8301.jpg",
+    "/album/DEE_8355.jpg",
+    "/album/DEE_8486.jpg",
+    "/album/DEE_8496.jpg",
+    "/album/DEE_8497.jpg",
+    "/album/DEE_8546.jpg",
+    "/album/DEE_8567.jpg",
+    "/album/DEE_8584.jpg",
+    "/album/DEE_8614.jpg",
+    "/album/DEE_8667.jpg",
+    "/album/DEE_8729.jpg",
+    "/album/DEE_8732.jpg",
+    "/album/DEE_8739.jpg",
+    "/album/DEE_8771.jpg",
+    "/album/DEE_8838.jpg",
+    "/album/DEE_8872.jpg",
+    "/album/DEE_8934.jpg",
+    "/album/DEE_9014.jpg",
+    "/album/DEE_9050.jpg",
+    "/album/DEE_9097.jpg",
+    "/album/DEE_9117.jpg",
+    "/album/DEE_9150.jpg",
+    "/album/DEE_9219.jpg",
+    "/album/DEE_9327.jpg",
+    "/album/DEE_9401.jpg",
+    "/album/DEE_9425.jpg",
+    "/album/DEE_9432.jpg",
+    "/album/DEE_9484.jpg"
+  ],
+  "events": [
+    {
+      "title": "Lễ Vu Quy",
+      "date": "25/07/2026",
+      "time": "09:00",
+      "address": "Nhà Văn Hóa Hà My Đông A"
+    },
+    {
+      "title": "Lễ Thành Hôn",
+      "date": "02/08/2026",
+      "time": "09:00",
+      "address": "Nhà Văn Hóa Bình Kỳ 1"
+    }
+  ],
+  "venues": {
+    "groom": {
+      "name": "Nhà Trai",
+      "address": "Nhà Văn Hóa Bình Kỳ 1",
+      "mapUrl": "https://maps.app.goo.gl/3WMYcF2uV26m1uQv6",
+      "lat": 15.9918186,
+      "lng": 108.24238
+    },
+    "bride": {
+      "name": "Nhà Gái",
+      "address": "Nhà Văn Hóa Hà My Đông A",
+      "mapUrl": "https://maps.app.goo.gl/hRFTZe7qRxffJmGg7",
+      "lat": 15.9240358,
+      "lng": 108.3172538
+    }
+  },
+  "gift": {
+    "qrImage": "",
+    "bankName": "Vietcombank",
+    "accountName": "NGUYEN QUOC HUY",
+    "accountNumber": "0123456789"
+  },
+  "music": "/audio/wedding-song.mp3"
+}
