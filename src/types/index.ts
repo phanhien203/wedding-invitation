@@ -19,10 +19,17 @@ export interface EventInfo {
   address: string;
 }
 
-export interface VenueLocation {
+export interface Venue {
+  name: string;
+  address: string;
+  mapUrl: string;
   lat: number;
   lng: number;
-  address: string;
+}
+
+export interface Venues {
+  groom: Venue;
+  bride: Venue;
 }
 
 export interface GiftInfo {
@@ -42,7 +49,7 @@ export interface WeddingConfig {
   timeline: TimelineItem[];
   gallery: string[];
   events: EventInfo[];
-  venue: VenueLocation;
+  venues: Venues;
   gift: GiftInfo;
   music: string;
 }
