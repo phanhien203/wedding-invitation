@@ -15,6 +15,15 @@ export async function updateWeddingConfig(
   return data;
 }
 
+export async function geocodeMapUrl(
+  url: string
+): Promise<{ lat: number; lng: number }> {
+  const { data } = await api.get<{ lat: number; lng: number }>("/geocode", {
+    params: { url },
+  });
+  return data;
+}
+
 export async function uploadImage(file: File): Promise<string> {
   const form = new FormData();
   form.append("file", file);

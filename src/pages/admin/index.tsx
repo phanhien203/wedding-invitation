@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
+import dynamic from "next/dynamic";
 import Head from "next/head";
 import { LogOut, Trash2, Upload } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -13,15 +14,18 @@ import {
   deleteWish,
   fetchRsvps,
   fetchWeddingConfig,
+  geocodeMapUrl,
   updateWeddingConfig,
   uploadImage,
 } from "@/services/api";
 import type { Rsvp, TimelineItem, WeddingConfig, Wish } from "@/types";
 import { createId } from "@/utils/id";
 
+type GeoStatus = "loading" | "done" | "error";
+
 type Tab = "info" | "gallery" | "timeline" | "rsvp" | "wishes";
 
-export default function AdminHome() {
+function AdminHome() {
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -31,8 +35,29 @@ export default function AdminHome() {
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [geoStatus, setGeoStatus] = useState<{
+    groom?: GeoStatus;
+    bride?: GeoStatus;
+  }>({});
 
-  const { register, handleSubmit, reset } = useForm<WeddingConfig>();
+  const form = useForm<WeddingConfig>();
+  const { register, handleSubmit, reset, setValue } = form;
+
+  const handleGeocode = async (side: "groom" | "bride", url: string) => {
+    if (!url.trim()) {
+      setGeoStatus((s) => ({ ...s, [side]: undefined }));
+      return;
+    }
+    setGeoStatus((s) => ({ ...s, [side]: "loading" }));
+    try {
+      const { lat, lng } = await geocodeMapUrl(url);
+      setValue(`venues.${side}.lat`, lat, { shouldDirty: true });
+      setValue(`venues.${side}.lng`, lng, { shouldDirty: true });
+      setGeoStatus((s) => ({ ...s, [side]: "done" }));
+    } catch {
+      setGeoStatus((s) => ({ ...s, [side]: "error" }));
+    }
+  };
 
   useEffect(() => {
     checkAdminSession().then(setAuthenticated);
@@ -304,22 +329,19 @@ export default function AdminHome() {
                 <Input label="Ngân hàng" {...register("gift.bankName")} />
                 <Input label="Chủ TK" {...register("gift.accountName")} />
                 <Input label="Số TK" {...register("gift.accountNumber")} />
-                <Input
-                  label="Địa chỉ venue"
-                  {...register("venue.address")}
-                  className="sm:col-span-2"
+                <VenueFields
+                  side="groom"
+                  label="Nhà Trai"
+                  form={form}
+                  status={geoStatus.groom}
+                  onGeocode={handleGeocode}
                 />
-                <Input
-                  label="Latitude"
-                  type="number"
-                  step="any"
-                  {...register("venue.lat", { valueAsNumber: true })}
-                />
-                <Input
-                  label="Longitude"
-                  type="number"
-                  step="any"
-                  {...register("venue.lng", { valueAsNumber: true })}
+                <VenueFields
+                  side="bride"
+                  label="Nhà Gái"
+                  form={form}
+                  status={geoStatus.bride}
+                  onGeocode={handleGeocode}
                 />
                 {config.events.map((event, index) => (
                   <div
@@ -484,3 +506,74 @@ export default function AdminHome() {
     </>
   );
 }
+
+function VenueFields({
+  side,
+  label,
+  form,
+  status,
+  onGeocode,
+}: {
+  side: "groom" | "bride";
+  label: string;
+  form: UseFormReturn<WeddingConfig>;
+  status?: GeoStatus;
+  onGeocode: (side: "groom" | "bride", url: string) => void;
+}) {
+  const { register } = form;
+  const mapUrl = register(`venues.${side}.mapUrl`);
+
+  return (
+    <div className="space-y-3 rounded-xl border border-sage-100 p-4 sm:col-span-2">
+      <p className="text-sm font-medium">Địa điểm · {label}</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Input label="Tên địa điểm" {...register(`venues.${side}.name`)} />
+        <Input label="Địa chỉ" {...register(`venues.${side}.address`)} />
+        <div className="sm:col-span-2">
+          <Input
+            label="Link Google Maps (dán URL chia sẻ)"
+            placeholder="https://maps.app.goo.gl/..."
+            {...mapUrl}
+            onBlur={(e) => {
+              mapUrl.onBlur(e);
+              onGeocode(side, e.currentTarget.value);
+            }}
+          />
+          {status === "loading" && (
+            <p className="mt-1.5 text-xs text-ink/50">Đang lấy toạ độ từ link...</p>
+          )}
+          {status === "done" && (
+            <p className="mt-1.5 text-xs text-sage-700">
+              Đã tự động điền toạ độ ✓
+            </p>
+          )}
+          {status === "error" && (
+            <p className="mt-1.5 text-xs text-blush-500">
+              Không lấy được toạ độ. Vui lòng kiểm tra lại link.
+            </p>
+          )}
+        </div>
+        <Input
+          label="Vĩ độ (tự động)"
+          type="number"
+          step="any"
+          readOnly
+          className="bg-sage-100/40 text-ink/60"
+          {...register(`venues.${side}.lat`, { valueAsNumber: true })}
+        />
+        <Input
+          label="Kinh độ (tự động)"
+          type="number"
+          step="any"
+          readOnly
+          className="bg-sage-100/40 text-ink/60"
+          {...register(`venues.${side}.lng`, { valueAsNumber: true })}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Admin is auth-gated and needs no SSR; render client-only to avoid a
+// hydration mismatch that could leave a direct page load stuck on "Đang tải...".
+export default dynamic(() => Promise.resolve(AdminHome), { ssr: false });

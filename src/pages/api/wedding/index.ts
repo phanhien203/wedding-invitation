@@ -1,7 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { isAdminRequest } from "@/lib/auth";
 import { readWeddingConfig, writeWeddingConfig } from "@/lib/data";
-import type { WeddingConfig } from "@/types";
+import { resolveMapUrl } from "@/lib/geocode";
+import type { Venue, WeddingConfig } from "@/types";
+
+async function resolveVenue(venue: Venue): Promise<Venue> {
+  const coords = await resolveMapUrl(venue.mapUrl);
+  return coords ? { ...venue, ...coords } : venue;
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -17,6 +23,15 @@ export default async function handler(
       return res.status(401).json({ error: "Unauthorized" });
     }
     const config = req.body as WeddingConfig;
+
+    if (config.venues) {
+      const [groom, bride] = await Promise.all([
+        resolveVenue(config.venues.groom),
+        resolveVenue(config.venues.bride),
+      ]);
+      config.venues = { groom, bride };
+    }
+
     await writeWeddingConfig(config);
     return res.status(200).json(config);
   }

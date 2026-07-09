@@ -5,7 +5,7 @@ import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import { Maximize2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Section from "@/components/ui/Section";
-import Modal from "@/components/ui/Modal";
+import ImageViewer from "@/components/ImageViewer";
 
 import "swiper/css";
 import "swiper/css/navigation";
@@ -67,23 +67,11 @@ export default function GallerySection({ images }: GallerySectionProps) {
         </Swiper>
       </motion.div>
 
-      <Modal
-        open={lightboxIndex !== null}
+      <ImageViewer
+        images={images}
+        openIndex={lightboxIndex}
         onClose={() => setLightboxIndex(null)}
-        className="max-w-4xl bg-black p-2"
-      >
-        {lightboxIndex !== null && (
-          <div className="relative aspect-[4/3] w-full">
-            <Image
-              src={images[lightboxIndex]}
-              alt={`Gallery ${lightboxIndex + 1}`}
-              fill
-              className="object-contain"
-              sizes="90vw"
-            />
-          </div>
-        )}
-      </Modal>
+      />
     </Section>
   );
 }

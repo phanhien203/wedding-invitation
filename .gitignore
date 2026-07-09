@@ -29,3 +29,6 @@ next-env.d.ts
 /public/uploads/*
 !/public/uploads/.gitkeep
 /data/*.json
+
+# local backup of original (pre-resize) album photos
+/image-backup/

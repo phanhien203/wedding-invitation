@@ -1,17 +1,18 @@
-import dynamic from "next/dynamic";
+import VenueMap from "@/components/common/VenueMap";
 import Section from "@/components/ui/Section";
-import type { VenueLocation } from "@/types";
-
-const Map = dynamic(() => import("@/components/common/Map"), { ssr: false });
+import type { Venues } from "@/types";
 
 interface MapSectionProps {
-  venue: VenueLocation;
+  venues: Venues;
 }
 
-export default function MapSection({ venue }: MapSectionProps) {
+export default function MapSection({ venues }: MapSectionProps) {
   return (
     <Section title="Địa điểm" subtitle="Location" className="bg-blush-50/30">
-      <Map venue={venue} />
+      <div className="grid gap-6 md:grid-cols-2">
+        <VenueMap label="Nhà Trai" venue={venues.groom} />
+        <VenueMap label="Nhà Gái" venue={venues.bride} />
+      </div>
     </Section>
   );
 }

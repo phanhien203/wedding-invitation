@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -6,6 +7,7 @@ import type { Swiper as SwiperClass } from "swiper";
 import { Navigation, Keyboard, Zoom } from "swiper/modules";
 import { X, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { fullResSrc } from "@/utils/image";
 
 interface ImageViewerProps {
   images: string[];
@@ -37,7 +39,7 @@ export default function ImageViewer({ images, openIndex, onClose }: ImageViewerP
   }, [isOpen, onClose]);
 
   const download = useCallback(() => {
-    const src = images[current];
+    const src = fullResSrc(images[current]);
     if (!src) return;
     const link = document.createElement("a");
     link.href = src;
@@ -46,6 +48,18 @@ export default function ImageViewer({ images, openIndex, onClose }: ImageViewerP
     link.click();
     document.body.removeChild(link);
   }, [current, images]);
+
+  const handleBackdropClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      const target = e.target as HTMLElement;
+      // Chỉ đóng khi bấm vào vùng nền trống, không phải ảnh / nút điều hướng
+      if (target.closest("img") || target.closest("button")) {
+        return;
+      }
+      onClose();
+    },
+    [onClose],
+  );
 
   if (!isOpen) return null;
 
@@ -81,26 +95,30 @@ export default function ImageViewer({ images, openIndex, onClose }: ImageViewerP
       </div>
 
       {/* Vùng ảnh */}
-      <div className="relative flex-1 overflow-hidden">
+      <div
+        className="relative flex-1 overflow-hidden"
+        onClick={handleBackdropClick}
+      >
         <Swiper
           modules={[Navigation, Keyboard, Zoom]}
           initialSlide={openIndex ?? 0}
+          loop={images.length > 1}
           zoom={{ maxRatio: 3 }}
           keyboard={{ enabled: true }}
           navigation={{ prevEl: ".viewer-prev", nextEl: ".viewer-next" }}
           spaceBetween={24}
           onSwiper={(s) => (swiperRef.current = s)}
-          onSlideChange={(s) => setCurrent(s.activeIndex)}
+          onSlideChange={(s) => setCurrent(s.realIndex)}
           className="h-full w-full"
         >
           {images.map((src, i) => (
             <SwiperSlide key={src} className="flex items-center justify-center">
               <div className="swiper-zoom-container">
                 <Image
-                  src={src}
+                  src={fullResSrc(src)}
                   alt={`Ảnh cưới ${i + 1}`}
-                  width={1600}
-                  height={2000}
+                  width={2560}
+                  height={3840}
                   priority={i === (openIndex ?? 0)}
                   draggable={false}
                   className="max-h-[78vh] w-auto select-none object-contain"
@@ -129,7 +147,7 @@ export default function ImageViewer({ images, openIndex, onClose }: ImageViewerP
         {images.map((src, i) => (
           <button
             key={src}
-            onClick={() => swiperRef.current?.slideTo(i)}
+            onClick={() => swiperRef.current?.slideToLoop(i)}
             className={cn(
               "relative h-14 w-14 shrink-0 overflow-hidden rounded-lg ring-2 transition-all",
               i === current

@@ -47,7 +47,7 @@ export default function Client({ wedding, wishes }: ClientProps) {
         <GallerySection images={wedding.gallery} />
         <CountdownSection weddingDate={wedding.weddingDate} />
         <EventSection events={wedding.events} />
-        <MapSection venue={wedding.venue} />
+        <MapSection venues={wedding.venues} />
         <GiftSection gift={wedding.gift} />
         <RsvpSection />
         <WishesSection initialWishes={wishes} />
