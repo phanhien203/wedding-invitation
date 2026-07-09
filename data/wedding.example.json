@@ -1,0 +1,82 @@
+{
+  "brideName": "Minh Anh",
+  "groomName": "Quốc Huy",
+  "weddingDate": "2026-10-18T09:00:00",
+  "coverImage": "/images/cover.jpg",
+  "bride": {
+    "name": "Minh Anh",
+    "intro": "Yêu thích hoa, sách và những buổi chiều yên bình bên gia đình.",
+    "photo": "/images/bride.jpg"
+  },
+  "groom": {
+    "name": "Quốc Huy",
+    "intro": "Thích du lịch, nhiếp ảnh và luôn tìm kiếm những khoảnh khắc đẹp.",
+    "photo": "/images/groom.jpg"
+  },
+  "timeline": [
+    {
+      "id": "1",
+      "date": "2020",
+      "title": "Lần đầu gặp gỡ",
+      "description": "Chúng mình gặp nhau tại một buổi họp mặt bạn bè.",
+      "image": "/images/story-1.jpg"
+    },
+    {
+      "id": "2",
+      "date": "2022",
+      "title": "Hẹn hò",
+      "description": "Những chuyến đi nhỏ đã gắn kết chúng mình hơn.",
+      "image": "/images/story-2.jpg"
+    },
+    {
+      "id": "3",
+      "date": "2025",
+      "title": "Lời cầu hôn",
+      "description": "Một ngày đẹp trời, anh đã quỳ gối và hỏi em.",
+      "image": "/images/story-3.jpg"
+    }
+  ],
+  "gallery": [
+    "/images/gallery-1.jpg",
+    "/images/gallery-2.jpg",
+    "/images/gallery-3.jpg",
+    "/images/gallery-4.jpg"
+  ],
+  "events": [
+    {
+      "title": "Lễ Vu Quy",
+      "date": "18/10/2026",
+      "time": "09:00",
+      "address": "Tư gia nhà gái, Quận 1, TP. Hồ Chí Minh"
+    },
+    {
+      "title": "Tiệc Cưới",
+      "date": "18/10/2026",
+      "time": "17:30",
+      "address": "Trung tâm Hội nghị White Palace, Quận 3, TP. Hồ Chí Minh"
+    }
+  ],
+  "venues": {
+    "groom": {
+      "name": "Nhà Trai",
+      "address": "Tư gia nhà trai",
+      "mapUrl": "",
+      "lat": 0,
+      "lng": 0
+    },
+    "bride": {
+      "name": "Nhà Gái",
+      "address": "Tư gia nhà gái",
+      "mapUrl": "",
+      "lat": 0,
+      "lng": 0
+    }
+  },
+  "gift": {
+    "qrImage": "/images/qr-code.jpg",
+    "bankName": "Vietcombank",
+    "accountName": "NGUYEN QUOC HUY",
+    "accountNumber": "0123456789"
+  },
+  "music": "/audio/wedding-song.mp3"
+}
