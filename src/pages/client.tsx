@@ -1,28 +1,55 @@
 import Head from "next/head";
 import { GetServerSideProps } from "next";
 import MainLayout from "@/layouts/MainLayout";
+import InvitationIntro from "@/components/InvitationIntro";
 import HeroSection from "@/components/sections/HeroSection";
 import CoupleSection from "@/components/sections/CoupleSection";
+import CeremonyInfoSection from "@/components/sections/CeremonyInfoSection";
 import LoveStorySection from "@/components/sections/LoveStorySection";
 import GallerySection from "@/components/sections/GallerySection";
 import CountdownSection from "@/components/sections/CountdownSection";
 import EventSection from "@/components/sections/EventSection";
 import MapSection from "@/components/sections/MapSection";
+import ScheduleSection from "@/components/sections/ScheduleSection";
 import GiftSection from "@/components/sections/GiftSection";
 import RsvpSection from "@/components/sections/RsvpSection";
 import WishesSection from "@/components/sections/WishesSection";
 import FooterSection from "@/components/sections/FooterSection";
-import { readWeddingConfig, readWishes } from "@/lib/data";
-import type { WeddingConfig, Wish } from "@/types";
+import {
+  readGuests,
+  readRsvps,
+  readWeddingConfig,
+  readWishes,
+} from "@/lib/data";
+import { resolveSideDate } from "@/utils/date";
+import type { Rsvp, WeddingConfig, WeddingSide, Wish } from "@/types";
 
 interface ClientProps {
   wedding: WeddingConfig;
   wishes: Wish[];
+  inviteeName: string | null;
+  inviteeSide: WeddingSide | null;
+  guestSlug: string | null;
+  initialRsvp: Rsvp | null;
 }
 
-export default function Client({ wedding, wishes }: ClientProps) {
+export default function Client({
+  wedding,
+  wishes,
+  inviteeName,
+  inviteeSide,
+  guestSlug,
+  initialRsvp,
+}: ClientProps) {
   const title = `${wedding.brideName} & ${wedding.groomName} · Wedding Invitation`;
   const description = `Thiệp mời đám cưới ${wedding.brideName} & ${wedding.groomName}`;
+
+  // Ngày hiển thị theo nhà của khách (nhà gái → ngày nhà gái; còn lại → nhà trai).
+  const displayDate = resolveSideDate(
+    wedding.events,
+    inviteeSide,
+    wedding.weddingDate
+  );
 
   return (
     <>
@@ -35,21 +62,47 @@ export default function Client({ wedding, wishes }: ClientProps) {
         <meta property="og:image" content={wedding.coverImage} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
+      <InvitationIntro
+        brideName={wedding.brideName}
+        groomName={wedding.groomName}
+        weddingDate={displayDate}
+        coverImage={wedding.coverImage}
+        inviteeName={inviteeName}
+      />
+      {/* Ảnh hero full-width, nằm ngoài cột nội dung. */}
+      <HeroSection
+        brideName={wedding.brideName}
+        groomName={wedding.groomName}
+        weddingDate={displayDate}
+        coverImage={wedding.coverImage}
+        inviteeName={inviteeName}
+      />
       <MainLayout>
-        <HeroSection
+        <CoupleSection
+          bride={wedding.bride}
+          groom={wedding.groom}
           brideName={wedding.brideName}
           groomName={wedding.groomName}
-          weddingDate={wedding.weddingDate}
-          coverImage={wedding.coverImage}
         />
-        <CoupleSection bride={wedding.bride} groom={wedding.groom} />
+        <CeremonyInfoSection
+          parents={wedding.parents}
+          groom={wedding.groom}
+          bride={wedding.bride}
+        />
         <LoveStorySection timeline={wedding.timeline} />
         <GallerySection images={wedding.gallery} />
-        <CountdownSection weddingDate={wedding.weddingDate} />
-        <EventSection events={wedding.events} />
-        <MapSection venues={wedding.venues} />
+        <CountdownSection weddingDate={displayDate} />
+        <EventSection events={wedding.events} side={inviteeSide} />
+        <MapSection venues={wedding.venues} side={inviteeSide} />
+        <ScheduleSection schedule={wedding.schedule ?? []} />
         <GiftSection gift={wedding.gift} />
-        <RsvpSection />
+        {inviteeName && guestSlug && (
+          <RsvpSection
+            slug={guestSlug}
+            guestName={inviteeName}
+            initialRsvp={initialRsvp}
+          />
+        )}
         <WishesSection initialWishes={wishes} />
         <FooterSection
           musicSrc={wedding.music}
@@ -61,11 +114,32 @@ export default function Client({ wedding, wishes }: ClientProps) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps<ClientProps> = async () => {
-  const [wedding, wishes] = await Promise.all([
+export const getServerSideProps: GetServerSideProps<ClientProps> = async (
+  ctx
+) => {
+  const slug = typeof ctx.query.to === "string" ? ctx.query.to : null;
+
+  const [wedding, allWishes, guests, rsvps] = await Promise.all([
     readWeddingConfig(),
     readWishes(),
+    slug ? readGuests() : Promise.resolve([]),
+    slug ? readRsvps() : Promise.resolve([]),
   ]);
 
-  return { props: { wedding, wishes } };
+  // Chỉ hiển thị lời chúc admin không ẩn.
+  const wishes = allWishes.filter((w) => !w.hidden);
+
+  // Chỉ slug đã lưu mới là thiệp mời hợp lệ — param bừa sẽ không ra tên khách.
+  const guest = slug ? (guests.find((g) => g.slug === slug) ?? null) : null;
+  const inviteeName = guest?.name ?? null;
+  const inviteeSide = guest?.side ?? null;
+  const guestSlug = guest?.slug ?? null;
+  // Trạng thái xác nhận trước đó của khách (nếu có) để hiện lại và cập nhật.
+  const initialRsvp = guest
+    ? (rsvps.find((r) => r.guestSlug === guest.slug) ?? null)
+    : null;
+
+  return {
+    props: { wedding, wishes, inviteeName, inviteeSide, guestSlug, initialRsvp },
+  };
 };

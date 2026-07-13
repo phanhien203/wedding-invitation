@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { isAdminRequest } from "@/lib/auth";
 import { readWishes, writeWishes } from "@/lib/data";
 import { createId } from "@/utils/id";
 import type { Wish } from "@/types";
@@ -9,7 +10,11 @@ export default async function handler(
 ) {
   if (req.method === "GET") {
     const wishes = await readWishes();
-    return res.status(200).json(wishes);
+    // Admin thấy tất cả để quản lý; public chỉ thấy lời chúc đang hiển thị.
+    const visible = isAdminRequest(req)
+      ? wishes
+      : wishes.filter((w) => !w.hidden);
+    return res.status(200).json(visible);
   }
 
   if (req.method === "POST") {

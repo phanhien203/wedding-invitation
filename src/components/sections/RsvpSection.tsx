@@ -8,43 +8,59 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
 import { submitRsvp } from "@/services/api";
+import type { Rsvp } from "@/types";
 
 const schema = z.object({
-  name: z.string().min(1, "Vui lòng nhập họ tên"),
-  phone: z.string().min(1, "Vui lòng nhập số điện thoại"),
-  guests: z.coerce.number().min(1).max(10),
   attendance: z.enum(["yes", "no"]),
+  guests: z.coerce.number().min(1).max(20),
   message: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
 
-export default function RsvpSection() {
-  const [submitted, setSubmitted] = useState(false);
+interface RsvpSectionProps {
+  slug: string;
+  guestName: string;
+  initialRsvp: Rsvp | null;
+}
+
+export default function RsvpSection({
+  slug,
+  guestName,
+  initialRsvp,
+}: RsvpSectionProps) {
+  const [current, setCurrent] = useState<Rsvp | null>(initialRsvp);
+  const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
   const {
     register,
     handleSubmit,
-    reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { guests: 1, attendance: "yes" },
+    defaultValues: {
+      attendance: initialRsvp?.attendance ?? "yes",
+      guests: initialRsvp && initialRsvp.guests > 0 ? initialRsvp.guests : 1,
+      message: initialRsvp?.message ?? "",
+    },
   });
+
+  const attendance = watch("attendance");
 
   const onSubmit = async (data: FormData) => {
     setError("");
+    setSaved(false);
     try {
-      await submitRsvp({
-        name: data.name,
-        phone: data.phone,
-        guests: data.guests,
+      const rsvp = await submitRsvp({
+        slug,
         attendance: data.attendance,
+        guests: data.attendance === "yes" ? data.guests : 0,
         message: data.message ?? "",
       });
-      setSubmitted(true);
-      reset();
+      setCurrent(rsvp);
+      setSaved(true);
     } catch {
       setError("Gửi xác nhận thất bại. Vui lòng thử lại.");
     }
@@ -58,53 +74,69 @@ export default function RsvpSection() {
         viewport={{ once: true }}
         className="mx-auto max-w-lg rounded-2xl border border-sage-100 bg-white p-6 shadow-sm sm:p-8"
       >
-        {submitted ? (
-          <p className="py-8 text-center text-ink/70">
-            Cảm ơn bạn đã xác nhận. Hẹn gặp bạn tại ngày trọng đại!
-          </p>
-        ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <p className="mb-5 text-center text-sm text-ink/60">
+          Kính gửi{" "}
+          <span className="font-medium text-ink">{guestName}</span>, mong bạn
+          dành chút thời gian xác nhận tham dự.
+        </p>
+
+        {current && (
+          <div className="mb-5 rounded-xl bg-sage-100/60 px-4 py-3 text-center text-sm text-ink/70">
+            Bạn đã xác nhận:{" "}
+            <span className="font-medium text-ink">
+              {current.attendance === "yes"
+                ? `Có tham dự · ${current.guests} người`
+                : "Không thể tham dự"}
+            </span>
+            . Bạn có thể cập nhật lại bên dưới.
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-ink">
+              Bạn sẽ tham dự chứ?
+            </span>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" value="yes" {...register("attendance")} />
+                Có, tôi sẽ đến
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="radio" value="no" {...register("attendance")} />
+                Rất tiếc, không thể
+              </label>
+            </div>
+          </div>
+
+          {attendance === "yes" && (
             <Input
-              label="Họ và tên"
-              {...register("name")}
-              error={errors.name?.message}
-            />
-            <Input
-              label="Số điện thoại"
-              {...register("phone")}
-              error={errors.phone?.message}
-            />
-            <Input
-              label="Số khách đi cùng"
+              label="Số người tham dự"
               type="number"
               min={1}
-              max={10}
+              max={20}
               {...register("guests")}
               error={errors.guests?.message}
             />
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-ink">Tham dự</span>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="radio" value="yes" {...register("attendance")} />
-                  Có, tôi sẽ đến
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="radio" value="no" {...register("attendance")} />
-                  Không thể tham dự
-                </label>
-              </div>
-            </div>
-            <Textarea
-              label="Lời nhắn (tuỳ chọn)"
-              {...register("message")}
-            />
-            {error && <p className="text-sm text-blush-500">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Đang gửi..." : "Gửi xác nhận"}
-            </Button>
-          </form>
-        )}
+          )}
+
+          <Textarea label="Lời nhắn (tuỳ chọn)" {...register("message")} />
+
+          {error && <p className="text-sm text-blush-500">{error}</p>}
+          {saved && (
+            <p className="text-sm text-sage-700">
+              Đã lưu xác nhận của bạn. Cảm ơn bạn rất nhiều!
+            </p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Đang gửi..."
+              : current
+                ? "Cập nhật xác nhận"
+                : "Gửi xác nhận"}
+          </Button>
+        </form>
       </motion.div>
     </Section>
   );

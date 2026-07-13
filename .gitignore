@@ -29,9 +29,10 @@ next-env.d.ts
 /public/uploads/*
 !/public/uploads/.gitkeep
 /data/*.json
-# ...but the wedding config is site content and must be deployed
+# ...but the wedding config and guest list are site content and must be deployed
 !/data/wedding.json
 !/data/wedding.example.json
+!/data/guests.json
 
 # local backup of original (pre-resize) album photos
 /image-backup/
