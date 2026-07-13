@@ -1,5 +1,12 @@
 import axios from "axios";
-import type { WeddingConfig, Rsvp, Wish } from "@/types";
+import type {
+  WeddingConfig,
+  Rsvp,
+  Wish,
+  Guest,
+  WeddingSide,
+  Attendance,
+} from "@/types";
 
 const api = axios.create({ baseURL: "/api" });
 
@@ -37,9 +44,12 @@ export async function deleteImage(filename: string): Promise<void> {
   await api.delete(`/upload/${filename}`);
 }
 
-export async function submitRsvp(
-  payload: Omit<Rsvp, "id" | "createdAt">
-): Promise<Rsvp> {
+export async function submitRsvp(payload: {
+  slug: string;
+  attendance: Attendance;
+  guests: number;
+  message?: string;
+}): Promise<Rsvp> {
   const { data } = await api.post<Rsvp>("/rsvp", payload);
   return data;
 }
@@ -67,6 +77,40 @@ export async function fetchWishes(): Promise<Wish[]> {
 
 export async function deleteWish(id: string): Promise<void> {
   await api.delete(`/wishes/${id}`);
+}
+
+export async function setWishHidden(
+  id: string,
+  hidden: boolean
+): Promise<Wish> {
+  const { data } = await api.patch<Wish>(`/wishes/${id}`, { hidden });
+  return data;
+}
+
+export async function fetchGuests(): Promise<Guest[]> {
+  const { data } = await api.get<Guest[]>("/guests");
+  return data;
+}
+
+export async function createGuest(payload: {
+  name: string;
+  note?: string;
+  side?: WeddingSide | "";
+}): Promise<Guest> {
+  const { data } = await api.post<Guest>("/guests", payload);
+  return data;
+}
+
+export async function updateGuest(
+  id: string,
+  payload: { name?: string; note?: string; side?: WeddingSide | "" }
+): Promise<Guest> {
+  const { data } = await api.put<Guest>(`/guests/${id}`, payload);
+  return data;
+}
+
+export async function deleteGuest(id: string): Promise<void> {
+  await api.delete(`/guests/${id}`);
 }
 
 export async function adminLogin(password: string): Promise<void> {

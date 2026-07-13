@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import type { WeddingConfig, Rsvp, Wish } from "@/types";
+import type { WeddingConfig, Rsvp, Wish, Guest } from "@/types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -57,4 +57,12 @@ export async function readWishes(): Promise<Wish[]> {
 
 export async function writeWishes(wishes: Wish[]): Promise<void> {
   await writeJson("wishes.json", wishes);
+}
+
+export async function readGuests(): Promise<Guest[]> {
+  return (await readJsonFile<Guest[]>("guests.json")) ?? [];
+}
+
+export async function writeGuests(guests: Guest[]): Promise<void> {
+  await writeJson("guests.json", guests);
 }

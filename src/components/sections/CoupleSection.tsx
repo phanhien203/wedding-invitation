@@ -6,43 +6,86 @@ import type { Person } from "@/types";
 interface CoupleSectionProps {
   bride: Person;
   groom: Person;
+  brideName: string;
+  groomName: string;
 }
 
-function PersonCard({ person, label }: { person: Person; label: string }) {
+function TiltPhoto({
+  src,
+  alt,
+  rotate,
+}: {
+  src: string;
+  alt: string;
+  rotate: number;
+}) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-      className="flex flex-col items-center text-center"
-    >
-      <div className="relative mb-6 h-48 w-48 overflow-hidden rounded-full border-4 border-white shadow-lg sm:h-56 sm:w-56">
+    <div className="shrink-0" style={{ transform: `rotate(${rotate}deg)` }}>
+      <div className="relative h-56 w-44 overflow-hidden rounded-sm border-[6px] border-white shadow-xl ring-1 ring-gold/30 sm:h-72 sm:w-56">
         <Image
-          src={person.photo}
-          alt={person.name}
+          src={src}
+          alt={alt}
           fill
           className="object-cover"
-          sizes="(max-width: 640px) 192px, 224px"
+          sizes="(max-width: 640px) 176px, 224px"
         />
       </div>
-      <p className="mb-1 text-xs uppercase tracking-[0.2em] text-gold">
-        {label}
-      </p>
-      <h3 className="mb-3 text-2xl font-semibold">{person.name}</h3>
-      <p className="max-w-xs text-sm leading-relaxed text-ink/60">
-        {person.intro}
-      </p>
-    </motion.div>
+    </div>
   );
 }
 
-export default function CoupleSection({ bride, groom }: CoupleSectionProps) {
+export default function CoupleSection({
+  bride,
+  groom,
+  brideName,
+  groomName,
+}: CoupleSectionProps) {
   return (
     <Section title="Cô dâu & Chú rể" subtitle="About us">
-      <div className="grid gap-12 sm:grid-cols-2 sm:gap-8">
-        <PersonCard person={bride} label="Cô dâu" />
-        <PersonCard person={groom} label="Chú rể" />
+      <div className="relative mx-auto max-w-2xl">
+        {/* Chú rể */}
+        <motion.div
+          initial={{ opacity: 0, x: -24 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="relative z-10 flex items-center justify-center gap-6 sm:gap-10"
+        >
+          <TiltPhoto src={groom.photo} alt={groom.name} rotate={-5} />
+          <div className="max-w-[45%] text-left">
+            <p className="mb-1 text-xs uppercase tracking-[0.3em] text-gold">
+              {groom.role ?? "Chú rể"}
+            </p>
+            <h3 className="font-script text-4xl leading-tight text-sage-700 sm:text-5xl">
+              {groomName}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink/55">
+              {groom.intro}
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Cô dâu */}
+        <motion.div
+          initial={{ opacity: 0, x: 24 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="relative z-10 -mt-6 flex flex-row-reverse items-center justify-center gap-6 sm:-mt-10 sm:gap-10"
+        >
+          <TiltPhoto src={bride.photo} alt={bride.name} rotate={5} />
+          <div className="max-w-[45%] text-right">
+            <p className="mb-1 text-xs uppercase tracking-[0.3em] text-gold">
+              {bride.role ?? "Cô dâu"}
+            </p>
+            <h3 className="font-script text-4xl leading-tight text-sage-700 sm:text-5xl">
+              {brideName}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink/55">
+              {bride.intro}
+            </p>
+          </div>
+        </motion.div>
       </div>
     </Section>
   );

@@ -6,12 +6,14 @@
   "bride": {
     "name": "Phan Thi Thu Hiền",
     "intro": "Yêu thích hoa, sách và những buổi chiều yên bình bên gia đình.",
-    "photo": "/album/DEE_8301.jpg"
+    "photo": "/album/DEE_8301.jpg",
+    "role": "Út Nữ"
   },
   "groom": {
     "name": "Thái Duy Đạt",
     "intro": "Thích du lịch, nhiếp ảnh và luôn tìm kiếm những khoảnh khắc đẹp.",
-    "photo": "/album/DEE_8771.jpg"
+    "photo": "/album/DEE_8771.jpg",
+    "role": "Út Nam"
   },
   "timeline": [
     {
@@ -71,13 +73,15 @@
       "title": "Lễ Vu Quy",
       "date": "25/07/2026",
       "time": "09:00",
-      "address": "Nhà Văn Hóa Hà My Đông A"
+      "address": "Nhà Văn Hóa Hà My Đông A",
+      "side": "bride"
     },
     {
       "title": "Lễ Thành Hôn",
       "date": "02/08/2026",
       "time": "09:00",
-      "address": "Nhà Văn Hóa Bình Kỳ 1"
+      "address": "Nhà Văn Hóa Bình Kỳ 1",
+      "side": "groom"
     }
   ],
   "venues": {
@@ -97,10 +101,40 @@
     }
   },
   "gift": {
-    "qrImage": "",
-    "bankName": "Vietcombank",
-    "accountName": "NGUYEN QUOC HUY",
-    "accountNumber": "0123456789"
+    "qrImage": "/uploads/1783973003905-z5uorcw.png",
+    "bankName": "TPBank",
+    "accountName": "THAI DUY DAT",
+    "accountNumber": "02746971101"
   },
-  "music": "/audio/wedding-song.mp3"
+  "music": "/audio/wedding-song.mp3",
+  "parents": {
+    "groom": {
+      "father": "Ông Thái Văn Ánh",
+      "mother": "Bà Lê Thị Bích Thủy",
+      "address": "Phường Ngũ Hành Sơn, thành phố Đà Nẵng"
+    },
+    "bride": {
+      "father": "Ông Phan Văn Cử",
+      "mother": "Bà Nguyễn Thị Phương",
+      "address": "Phường Điện Bàn Đông, thành phố Đà Nẵng"
+    }
+  },
+  "schedule": [
+    {
+      "time": "10:30",
+      "activity": "Đón khách"
+    },
+    {
+      "time": "11:00",
+      "activity": "Khai tiệc"
+    },
+    {
+      "time": "11:15",
+      "activity": "Rót rượu, cắt bánh"
+    },
+    {
+      "time": "11:30",
+      "activity": "Phục vụ món chính"
+    }
+  ]
 }
