@@ -1,15 +1,21 @@
 import fs from "fs/promises";
 import path from "path";
+import { getDb } from "@/lib/mongodb";
 import type { WeddingConfig, Rsvp, Wish, Guest } from "@/types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
+const COLLECTION = "store";
+
+interface StoreDoc {
+  _id: string;
+  data: unknown;
+}
 
 /**
- * Read a JSON file from the data dir. Returns null if it is missing or
- * unreadable — callers decide the fallback. On serverless hosts (Vercel) the
- * filesystem is read-only, so we never try to create files on read.
+ * Đọc file JSON đã commit (nguồn seed lần đầu). Read-only nên chạy được cả trên
+ * Vercel; trả về null nếu thiếu/không đọc được.
  */
-async function readJsonFile<T>(filename: string): Promise<T | null> {
+async function readSeedFile<T>(filename: string): Promise<T | null> {
   try {
     const content = await fs.readFile(path.join(DATA_DIR, filename), "utf-8");
     return JSON.parse(content) as T;
@@ -18,51 +24,75 @@ async function readJsonFile<T>(filename: string): Promise<T | null> {
   }
 }
 
-async function writeJson<T>(filename: string, data: T): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(
-    path.join(DATA_DIR, filename),
-    JSON.stringify(data, null, 2),
-    "utf-8"
-  );
+async function readStore<T>(key: string): Promise<T | null> {
+  const db = await getDb();
+  const doc = await db.collection<StoreDoc>(COLLECTION).findOne({ _id: key });
+  return doc ? (doc.data as T) : null;
+}
+
+async function writeStore<T>(key: string, data: T): Promise<void> {
+  const db = await getDb();
+  await db
+    .collection<StoreDoc>(COLLECTION)
+    .updateOne({ _id: key }, { $set: { data } }, { upsert: true });
+}
+
+/**
+ * Ưu tiên dữ liệu trong MongoDB; nếu chưa có thì seed từ file JSON đã commit
+ * (lần đầu deploy), lưu vào Mongo rồi trả về. Mọi thao tác GHI luôn vào Mongo.
+ */
+async function readData<T>(
+  key: string,
+  seedFile: string,
+  fallback: T | null
+): Promise<T | null> {
+  const fromDb = await readStore<T>(key);
+  if (fromDb !== null) return fromDb;
+
+  const fromFile = await readSeedFile<T>(seedFile);
+  if (fromFile !== null) {
+    await writeStore(key, fromFile);
+    return fromFile;
+  }
+  return fallback;
 }
 
 export async function readWeddingConfig(): Promise<WeddingConfig> {
   const config =
-    (await readJsonFile<WeddingConfig>("wedding.json")) ??
-    (await readJsonFile<WeddingConfig>("wedding.example.json"));
+    (await readData<WeddingConfig>("wedding", "wedding.json", null)) ??
+    (await readSeedFile<WeddingConfig>("wedding.example.json"));
   if (!config) {
     throw new Error(
-      "Missing wedding config: expected data/wedding.json (or data/wedding.example.json)."
+      "Missing wedding config: expected MongoDB 'wedding' or data/wedding.json."
     );
   }
   return config;
 }
 
 export async function writeWeddingConfig(config: WeddingConfig): Promise<void> {
-  await writeJson("wedding.json", config);
+  await writeStore("wedding", config);
 }
 
 export async function readRsvps(): Promise<Rsvp[]> {
-  return (await readJsonFile<Rsvp[]>("rsvp.json")) ?? [];
+  return (await readData<Rsvp[]>("rsvp", "rsvp.json", [])) ?? [];
 }
 
 export async function writeRsvps(rsvps: Rsvp[]): Promise<void> {
-  await writeJson("rsvp.json", rsvps);
+  await writeStore("rsvp", rsvps);
 }
 
 export async function readWishes(): Promise<Wish[]> {
-  return (await readJsonFile<Wish[]>("wishes.json")) ?? [];
+  return (await readData<Wish[]>("wishes", "wishes.json", [])) ?? [];
 }
 
 export async function writeWishes(wishes: Wish[]): Promise<void> {
-  await writeJson("wishes.json", wishes);
+  await writeStore("wishes", wishes);
 }
 
 export async function readGuests(): Promise<Guest[]> {
-  return (await readJsonFile<Guest[]>("guests.json")) ?? [];
+  return (await readData<Guest[]>("guests", "guests.json", [])) ?? [];
 }
 
 export async function writeGuests(guests: Guest[]): Promise<void> {
-  await writeJson("guests.json", guests);
+  await writeStore("guests", guests);
 }

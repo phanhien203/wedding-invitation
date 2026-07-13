@@ -292,6 +292,9 @@ function AdminHome() {
       setNewGuestName("");
       setNewGuestNote("");
       setNewGuestSide("");
+      setMessage("Đã thêm khách mời!");
+    } catch {
+      setMessage("Thêm khách mời thất bại. Vui lòng thử lại.");
     } finally {
       setAddingGuest(false);
     }
