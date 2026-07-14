@@ -31,7 +31,9 @@ const script = Dancing_Script({
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <main className={`${serif.variable} ${sans.variable} ${script.variable}`}>
+    <main
+      className={`${serif.variable} ${sans.variable} ${script.variable} font-sans`}
+    >
       <Component {...pageProps} />
     </main>
   );

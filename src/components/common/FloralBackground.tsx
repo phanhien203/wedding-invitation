@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
+import { cn } from "@/lib/cn";
 
 type Cluster = {
   top: number;
@@ -9,6 +10,8 @@ type Cluster = {
   rot: number;
   flip?: boolean;
   op: number;
+  // Tầng "điểm" nhích sâu vào trong cột — ẩn trên mobile để không đè chữ.
+  accent?: boolean;
 };
 
 // Cùng một bông hoa nhưng biến hoá góc xoay / lật / kích cỡ / độ mờ / vị trí để
@@ -37,10 +40,10 @@ const CLUSTERS: Cluster[] = [
   { top: 97, side: "right", off: -45, w: 295, rot: -7, flip: true, op: 0.8 },
 
   // Tầng điểm — bông nhỏ, xoay mạnh, nhích vào trong cột.
-  { top: 17, side: "right", off: 24, w: 150, rot: 26, op: 0.7 },
-  { top: 37, side: "left", off: 30, w: 140, rot: -22, flip: true, op: 0.68 },
-  { top: 58, side: "right", off: 26, w: 160, rot: 20, flip: true, op: 0.7 },
-  { top: 82, side: "left", off: 22, w: 138, rot: -18, op: 0.68 },
+  { top: 17, side: "right", off: 24, w: 150, rot: 26, op: 0.7, accent: true },
+  { top: 37, side: "left", off: 30, w: 140, rot: -22, flip: true, op: 0.68, accent: true },
+  { top: 58, side: "right", off: 26, w: 160, rot: 20, flip: true, op: 0.7, accent: true },
+  { top: 82, side: "left", off: 22, w: 138, rot: -18, op: 0.68, accent: true },
 ];
 
 /**
@@ -50,7 +53,11 @@ const CLUSTERS: Cluster[] = [
  */
 export default function FloralBackground() {
   return (
-    <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+    // Mobile: giảm đậm cả lớp hoa (opacity nhân dồn) để chữ dễ đọc; desktop giữ nguyên.
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 opacity-40 sm:opacity-100"
+    >
       {CLUSTERS.map((c, i) => {
         const style: CSSProperties = {
           top: `${c.top}%`,
@@ -66,7 +73,7 @@ export default function FloralBackground() {
             alt=""
             width={c.w}
             height={c.w}
-            className="absolute select-none"
+            className={cn("absolute select-none", c.accent && "hidden sm:block")}
             style={style}
           />
         );

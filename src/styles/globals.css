@@ -5,15 +5,16 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Tăng cỡ chữ gốc một chút để text dễ đọc hơn, nhất là trên mobile. */
+    font-size: 112.5%;
   }
 
   body {
-    @apply bg-cream text-ink font-sans antialiased;
+    @apply bg-sage-50 text-ink font-sans antialiased;
   }
 
   h1,
-  h2,
-  h3 {
+  h2 {
     @apply font-serif;
   }
 }
@@ -24,15 +25,15 @@
   }
 
   .gallery-swiper .swiper-pagination-bullet {
-    @apply bg-blush-300 opacity-60;
+    @apply bg-sage-300 opacity-60;
   }
 
   .gallery-swiper .swiper-pagination-bullet-active {
-    @apply bg-blush-400 opacity-100;
+    @apply bg-sage-700 opacity-100;
   }
 
   .gallery-swiper .swiper-button-next,
   .gallery-swiper .swiper-button-prev {
-    @apply text-blush-400;
+    @apply text-sage-700;
   }
 }

@@ -44,6 +44,19 @@ export async function deleteImage(filename: string): Promise<void> {
   await api.delete(`/upload/${filename}`);
 }
 
+export async function uploadAudio(
+  file: File,
+  previous?: string
+): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  if (previous) form.append("previous", previous);
+  const { data } = await api.post<{ url: string }>("/upload/audio", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.url;
+}
+
 export async function submitRsvp(payload: {
   slug: string;
   attendance: Attendance;

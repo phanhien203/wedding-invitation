@@ -9,7 +9,7 @@ interface CountdownSectionProps {
 function TimeBlock({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex aspect-square flex-col items-center justify-center rounded-2xl bg-white px-1 py-3 shadow-sm sm:aspect-auto sm:px-6 sm:py-6">
-      <span className="text-2xl font-semibold text-blush-500 sm:text-5xl">
+      <span className="text-2xl font-semibold text-sage-700 sm:text-5xl">
         {String(value).padStart(2, "0")}
       </span>
       <span className="mt-1 text-[10px] uppercase tracking-wider text-ink/50 sm:text-xs">

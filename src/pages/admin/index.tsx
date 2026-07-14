@@ -22,6 +22,7 @@ import {
   setWishHidden,
   updateGuest,
   updateWeddingConfig,
+  uploadAudio,
   uploadImage,
 } from "@/services/api";
 import type {
@@ -65,6 +66,8 @@ function AdminHome() {
   const [addingGuest, setAddingGuest] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [qrCropSrc, setQrCropSrc] = useState<string | null>(null);
+  const [audioUploading, setAudioUploading] = useState(false);
+  const [audioError, setAudioError] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [geoStatus, setGeoStatus] = useState<{
@@ -178,6 +181,24 @@ function AdminHome() {
     e.target.value = "";
   };
 
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !config) return;
+    setAudioError("");
+    setAudioUploading(true);
+    try {
+      const url = await uploadAudio(file, config.music);
+      const updated = { ...config, music: url };
+      setConfig(updated);
+      reset(updated);
+    } catch {
+      setAudioError("Upload thất bại. Chỉ chấp nhận file mp3.");
+    } finally {
+      setAudioUploading(false);
+      e.target.value = "";
+    }
+  };
+
   const handleQrSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -212,6 +233,7 @@ function AdminHome() {
       title: "",
       description: "",
       image: "",
+      chapter: "",
     };
     const updated = { ...config, timeline: [...config.timeline, item] };
     setConfig(updated);
@@ -442,6 +464,20 @@ function AdminHome() {
                 </div>
                 <div>
                   <Input label="Nhạc nền (URL)" {...register("music")} />
+                  <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm text-blush-500">
+                    <Upload size={14} />
+                    {audioUploading ? "Đang tải nhạc..." : "Upload nhạc (mp3)"}
+                    <input
+                      type="file"
+                      accept="audio/mpeg,.mp3"
+                      className="hidden"
+                      disabled={audioUploading}
+                      onChange={handleAudioUpload}
+                    />
+                  </label>
+                  {audioError && (
+                    <p className="mt-1 text-xs text-red-500">{audioError}</p>
+                  )}
                 </div>
                 <Input label="Tên cô dâu (chi tiết)" {...register("bride.name")} />
                 <Input label="Tên chú rể (chi tiết)" {...register("groom.name")} />
@@ -640,6 +676,11 @@ function AdminHome() {
                       </button>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
+                      <Input
+                        label="Giai đoạn/chương (để trống nếu cùng chương mốc trên)"
+                        {...register(`timeline.${index}.chapter`)}
+                        className="sm:col-span-2"
+                      />
                       <Input label="Năm/Ngày" {...register(`timeline.${index}.date`)} />
                       <Input label="Tiêu đề" {...register(`timeline.${index}.title`)} />
                       <Input
