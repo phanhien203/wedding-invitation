@@ -26,7 +26,7 @@ export default function FooterSection({
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-ink/60 transition hover:text-blush-500"
+              className="text-sm text-ink/60 transition hover:text-sage-700"
             >
               {link.platform}
             </a>

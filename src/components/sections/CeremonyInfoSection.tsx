@@ -20,10 +20,10 @@ function ParentBlock({
   return (
     <div className="text-center">
       <p className="mb-2 text-xs text-ink/60 sm:text-sm">Ông Bà</p>
-      <p className="font-serif text-base font-semibold text-sage-700 sm:text-lg">
+      <p className="text-base font-semibold text-sage-700 sm:text-lg">
         {father}
       </p>
-      <p className="font-serif text-base font-semibold text-sage-700 sm:text-lg">
+      <p className="text-base font-semibold text-sage-700 sm:text-lg">
         {mother}
       </p>
       {address && (

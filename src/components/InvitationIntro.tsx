@@ -1,28 +1,46 @@
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 import { formatDate } from "@/utils/date";
+import { useMusicStore } from "@/stores/musicStore";
+import FallingLeaves from "@/components/common/FallingLeaves";
 
 interface InvitationIntroProps {
   brideName: string;
   groomName: string;
   weddingDate: string;
-  coverImage: string;
   inviteeName?: string | null;
 }
 
 const CURTAIN = { duration: 1.1, ease: [0.76, 0, 0.24, 1] as const };
 
+// Nền xanh rừng đậm cho màn intro (kiểu vignette: sáng nhẹ ở giữa, tối dần ra
+// mép). Dùng cho từng nửa rèm phủ full viewport nên hai nửa ghép liền mạch.
+const GREEN_GRADIENT =
+  "radial-gradient(circle at 50% 38%, #3f5f2b 0%, #294420 45%, #15300f 100%)";
+
 export default function InvitationIntro({
   brideName,
   groomName,
   weddingDate,
-  coverImage,
   inviteeName,
 }: InvitationIntroProps) {
+  const [blooming, setBlooming] = useState(false);
   const [opening, setOpening] = useState(false);
   const [done, setDone] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const { setPlaying, setVolume } = useMusicStore();
+
+  // Bấm "Mở thiệp": phát nhạc ở 50% (cú click là hành vi người dùng nên trình
+  // duyệt cho phép autoplay), chạy hiệu ứng "nở" (tim lan tỏa + hoa hai bên bung
+  // ra), rồi sau ~1s mới mở rèm.
+  const handleOpen = () => {
+    if (blooming || opening) return;
+    setVolume(0.5);
+    setPlaying(true);
+    setBlooming(true);
+    window.setTimeout(() => setOpening(true), 1800);
+  };
 
   // Khoá cuộn nền khi màn intro còn hiển thị, và luôn bắt đầu từ đầu trang
   // (chặn trình duyệt khôi phục vị trí cuộn cũ khi F5).
@@ -39,69 +57,49 @@ export default function InvitationIntro({
     };
   }, [done]);
 
-  // Web: rèm mở dọc (trái/phải). Điện thoại: trượt lên trên.
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 639px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
   if (done) return null;
-
-  // Ảnh nền phủ đúng tỉ lệ (bg-cover). Mỗi tấm rèm là một khung cắt của cùng
-  // một ảnh cỡ full viewport nên hai nửa ghép lại không bị bóp méo.
-  const coverStyle = { backgroundImage: `url(${coverImage})` };
 
   return (
     <div className="fixed inset-0 z-[100] overflow-hidden">
-      {isMobile ? (
-        // Điện thoại: một tấm rèm trượt lên trên
-        <motion.div
-          className="absolute inset-0 overflow-hidden bg-ink"
-          initial={{ y: 0 }}
-          animate={{ y: opening ? "-101%" : 0 }}
-          transition={CURTAIN}
-          onAnimationComplete={() => {
-            if (opening) setDone(true);
-          }}
-        >
-          <div
-            className="absolute inset-0 bg-cover bg-center opacity-30"
-            style={coverStyle}
-          />
-        </motion.div>
-      ) : (
-        // Web: hai tấm rèm mở dọc sang hai bên
-        <>
-          <motion.div
-            className="absolute left-0 top-0 h-full w-1/2 overflow-hidden bg-ink"
-            initial={{ x: 0 }}
-            animate={{ x: opening ? "-101%" : 0 }}
-            transition={CURTAIN}
-          >
-            <div
-              className="absolute left-0 top-0 h-screen w-screen bg-cover bg-center opacity-30"
-              style={coverStyle}
-            />
-          </motion.div>
-          <motion.div
-            className="absolute right-0 top-0 h-full w-1/2 overflow-hidden bg-ink"
-            initial={{ x: 0 }}
-            animate={{ x: opening ? "101%" : 0 }}
-            transition={CURTAIN}
-            onAnimationComplete={() => {
-              if (opening) setDone(true);
-            }}
-          >
-            <div
-              className="absolute right-0 top-0 h-screen w-screen bg-cover bg-center opacity-30"
-              style={coverStyle}
-            />
-          </motion.div>
-        </>
-      )}
+      {/* Hai tấm rèm xanh chẻ dọc ở giữa và mở sang hai bên (mọi thiết bị).
+          Mỗi nửa chứa một lớp gradient full viewport pin về đúng cạnh nên hai
+          nửa ghép lại thành một nền xanh liền mạch. */}
+      <motion.div
+        className="absolute left-0 top-0 h-full w-1/2 overflow-hidden"
+        style={{ backgroundColor: "#15300f" }}
+        initial={{ x: 0 }}
+        animate={{ x: opening ? "-101%" : 0 }}
+        transition={CURTAIN}
+      >
+        <div
+          className="absolute left-0 top-0 h-screen w-screen"
+          style={{ background: GREEN_GRADIENT }}
+        />
+      </motion.div>
+      <motion.div
+        className="absolute right-0 top-0 h-full w-1/2 overflow-hidden"
+        style={{ backgroundColor: "#15300f" }}
+        initial={{ x: 0 }}
+        animate={{ x: opening ? "101%" : 0 }}
+        transition={CURTAIN}
+        onAnimationComplete={() => {
+          if (opening) setDone(true);
+        }}
+      >
+        <div
+          className="absolute right-0 top-0 h-screen w-screen"
+          style={{ background: GREEN_GRADIENT }}
+        />
+      </motion.div>
+
+      {/* Lá rơi phủ toàn màn, mờ dần khi mở thiệp. */}
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        animate={{ opacity: opening ? 0 : 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <FallingLeaves />
+      </motion.div>
 
       {/* Thẻ mời */}
       <motion.div
@@ -109,14 +107,81 @@ export default function InvitationIntro({
         animate={{ opacity: opening ? 0 : 1, scale: opening ? 0.92 : 1 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
       >
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.15 }}
-          className="pointer-events-auto w-full max-w-sm rounded-3xl bg-cream/95 px-8 py-10 text-center shadow-2xl backdrop-blur-sm"
-        >
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-sage-700 text-cream">
-            <Heart className="h-6 w-6 fill-current" />
+        <div className="relative w-full max-w-sm">
+          {/* Hoa trái (nở ra từ mép phải-dưới, hướng ra ngoài). */}
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute -left-12 -top-2 z-20 w-48 sm:-left-20 sm:w-64"
+            style={{ transformOrigin: "bottom right" }}
+            initial={{ opacity: 0, scale: 0.3, rotate: -14 }}
+            animate={
+              blooming
+                ? { opacity: 1, scale: 1, rotate: 0 }
+                : { opacity: 0, scale: 0.3, rotate: -14 }
+            }
+            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+          >
+            <Image
+              src="/images/flower.webp"
+              alt=""
+              width={260}
+              height={260}
+              className="h-auto w-full"
+            />
+          </motion.div>
+
+          {/* Hoa phải (lật ngang, nở ra từ mép trái-trên). */}
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute -right-12 -bottom-2 z-20 w-48 sm:-right-20 sm:w-64"
+            style={{ transformOrigin: "top left" }}
+            initial={{ opacity: 0, scale: 0.3, rotate: 14 }}
+            animate={
+              blooming
+                ? { opacity: 1, scale: 1, rotate: 0 }
+                : { opacity: 0, scale: 0.3, rotate: 14 }
+            }
+            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+          >
+            <Image
+              src="/images/flower.webp"
+              alt=""
+              width={260}
+              height={260}
+              className="h-auto w-full -scale-x-100"
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="pointer-events-auto relative z-10 w-full rounded-3xl bg-cream/95 px-8 py-10 text-center shadow-2xl backdrop-blur-sm"
+          >
+          <div className="relative mx-auto mb-6 h-14 w-14">
+            {/* Vòng lan tỏa khi bấm mở thiệp. */}
+            {blooming &&
+              [0, 0.45, 0.9].map((delay, i) => (
+                <motion.span
+                  key={i}
+                  className="absolute inset-0 rounded-full border-2 border-sage-500/60"
+                  initial={{ scale: 1, opacity: 0.6 }}
+                  animate={{ scale: 2.6, opacity: 0 }}
+                  transition={{
+                    duration: 1.3,
+                    delay,
+                    repeat: Infinity,
+                    ease: "easeOut",
+                  }}
+                />
+              ))}
+            <motion.div
+              animate={blooming ? { scale: [1, 1.18, 1] } : { scale: 1 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-sage-700 text-cream"
+            >
+              <Heart className="h-6 w-6 fill-current" />
+            </motion.div>
           </div>
 
           <h2 className="font-script text-4xl font-semibold leading-tight text-sage-700">
@@ -144,12 +209,13 @@ export default function InvitationIntro({
 
           <button
             type="button"
-            onClick={() => setOpening(true)}
+            onClick={handleOpen}
             className="mt-7 rounded-full bg-sage-700 px-9 py-3 text-sm font-medium tracking-wide text-cream shadow-md transition hover:bg-sage-500"
           >
             Mở thiệp
           </button>
-        </motion.div>
+          </motion.div>
+        </div>
       </motion.div>
     </div>
   );

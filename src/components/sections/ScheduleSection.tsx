@@ -21,7 +21,7 @@ export default function ScheduleSection({ schedule }: ScheduleSectionProps) {
             transition={{ duration: 0.4, delay: index * 0.06 }}
             className="flex items-stretch gap-5"
           >
-            <span className="w-16 shrink-0 pt-0.5 text-right font-serif text-lg text-ink/70">
+            <span className="w-16 shrink-0 pt-0.5 text-right text-lg font-medium text-ink/70">
               {item.time}
             </span>
             <div className="flex flex-col items-center">

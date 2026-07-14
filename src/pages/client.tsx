@@ -66,7 +66,6 @@ export default function Client({
         brideName={wedding.brideName}
         groomName={wedding.groomName}
         weddingDate={displayDate}
-        coverImage={wedding.coverImage}
         inviteeName={inviteeName}
       />
       {/* Ảnh hero full-width, nằm ngoài cột nội dung. */}

@@ -39,7 +39,7 @@ export default function MusicPlayer({ src, className }: MusicPlayerProps) {
 
       <button
         onClick={togglePlay}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-blush-400 text-white transition hover:bg-blush-500"
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-sage-700 text-white transition hover:bg-sage-500"
         aria-label={isPlaying ? "Pause music" : "Play music"}
       >
         {isPlaying ? <Pause size={16} /> : <Play size={16} className="ml-0.5" />}
@@ -47,7 +47,7 @@ export default function MusicPlayer({ src, className }: MusicPlayerProps) {
 
       <button
         onClick={toggleMute}
-        className="flex h-8 w-8 items-center justify-center rounded-full text-ink/60 transition hover:bg-blush-50 hover:text-ink"
+        className="flex h-8 w-8 items-center justify-center rounded-full text-ink/60 transition hover:bg-sage-100 hover:text-ink"
         aria-label={isMuted ? "Unmute" : "Mute"}
       >
         {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -60,7 +60,7 @@ export default function MusicPlayer({ src, className }: MusicPlayerProps) {
         step={0.05}
         value={isMuted ? 0 : volume}
         onChange={(e) => setVolume(Number(e.target.value))}
-        className="h-1 w-20 accent-blush-400"
+        className="h-1 w-20 accent-sage-700"
         aria-label="Volume"
       />
     </div>

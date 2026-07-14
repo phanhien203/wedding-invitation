@@ -15,13 +15,15 @@ const config: Config = {
           500: "#CF6B58",
         },
         sage: {
+          50: "#EFF3E9",
           100: "#EAEEE7",
           300: "#BCC9B4",
           500: "#8AA17C",
           700: "#5E7351",
         },
         gold: "#C8A96A",
-        ink: "#3D3733",
+        // Màu chữ chính: xanh lá đậm (đồng bộ tông xanh của web).
+        ink: "#2F3D26",
       },
       fontFamily: {
         serif: ["var(--font-serif)", "Georgia", "serif"],
@@ -41,10 +43,20 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(8px)" },
         },
+        "leaf-fall": {
+          from: { transform: "translate3d(0, -15vh, 0)" },
+          to: { transform: "translate3d(0, 115vh, 0)" },
+        },
+        "leaf-sway": {
+          from: { transform: "translateX(-16px) rotate(-25deg)" },
+          to: { transform: "translateX(16px) rotate(35deg)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.6s ease-out both",
         "bounce-slow": "bounceslow 2s ease-in-out infinite",
+        "leaf-fall": "leaf-fall 10s linear infinite",
+        "leaf-sway": "leaf-sway 3s ease-in-out infinite alternate",
       },
     },
   },

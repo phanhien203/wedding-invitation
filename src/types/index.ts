@@ -23,6 +23,9 @@ export interface TimelineItem {
   title: string;
   description: string;
   image: string;
+  /** Tên giai đoạn/chương (vd "Từ những người bạn"). Để trống nếu cùng chương
+   *  với mốc phía trên. Khi đổi giá trị sẽ hiện một nhãn chương mới. */
+  chapter?: string;
 }
 
 export type WeddingSide = "groom" | "bride";

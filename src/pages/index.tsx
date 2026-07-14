@@ -75,7 +75,7 @@ export default function Home({ images }: HomeProps) {
 
       {/* Album ảnh */}
       {images.length > 0 && (
-        <section className="bg-cream py-20 sm:py-28">
+        <section className="bg-sage-50 py-20 sm:py-28">
           <div className="container-page">
             <div className="mb-12 text-center" data-aos="fade-up">
               <p className="mb-3 text-xs uppercase tracking-[0.4em] text-gold">

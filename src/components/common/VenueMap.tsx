@@ -40,7 +40,7 @@ export default function VenueMap({ label, venue }: VenueMapProps) {
 
       <div className="flex flex-1 flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-2 text-sm text-ink/70">
-          <MapPin size={18} className="mt-0.5 shrink-0 text-blush-400" />
+          <MapPin size={18} className="mt-0.5 shrink-0 text-sage-700" />
           <span>{venue.address}</span>
         </div>
         {(hasCoords || venue.mapUrl) && (

@@ -18,7 +18,7 @@ export const useMusicStore = create<MusicState>()(
     (set, get) => ({
       isPlaying: false,
       isMuted: false,
-      volume: 0.7,
+      volume: 0.5,
       setPlaying: (isPlaying) => set({ isPlaying }),
       setMuted: (isMuted) => set({ isMuted }),
       setVolume: (volume) => set({ volume, isMuted: volume === 0 }),
