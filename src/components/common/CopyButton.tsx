@@ -22,7 +22,7 @@ export default function CopyButton({ text, label = "Sao chép" }: CopyButtonProp
       variant="outline"
       size="sm"
       onClick={handleCopy}
-      className="gap-1.5"
+      className="gap-1.5 whitespace-nowrap"
     >
       {copied ? <Check size={14} /> : <Copy size={14} />}
       {copied ? "Đã sao chép" : label}

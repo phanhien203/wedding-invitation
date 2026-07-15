@@ -4,6 +4,10 @@ export interface Person {
   photo: string;
   /** Vai vế trong gia đình, vd "Út Nam", "Út Nữ", "Trưởng Nam". */
   role?: string;
+  /** Số điện thoại liên hệ hiện ở footer. Để trống thì không hiện. */
+  phone?: string;
+  /** Link Facebook cá nhân hiện ở footer. Để trống thì không hiện. */
+  facebook?: string;
 }
 
 export interface ParentInfo {
@@ -22,7 +26,10 @@ export interface TimelineItem {
   date: string;
   title: string;
   description: string;
-  image: string;
+  /** Ảnh minh hoạ, tối đa MAX_TIMELINE_PHOTOS. Rỗng thì mốc chỉ hiện chữ. */
+  images?: string[];
+  /** @deprecated Dữ liệu cũ một ảnh; readWeddingConfig tự gộp vào images. */
+  image?: string;
   /** Tên giai đoạn/chương (vd "Từ những người bạn"). Để trống nếu cùng chương
    *  với mốc phía trên. Khi đổi giá trị sẽ hiện một nhãn chương mới. */
   chapter?: string;
@@ -83,11 +90,21 @@ export interface WeddingConfig {
 
 export type Attendance = "yes" | "no";
 
+/** File ảnh nằm trong public/uploads, dùng cho trang quản lý ảnh của admin. */
+export interface UploadedImage {
+  filename: string;
+  url: string;
+  /** Bytes. */
+  size: number;
+  uploadedAt: string;
+}
+
 export interface Rsvp {
   id: string;
-  /** Khoá theo khách mời — mỗi guest slug chỉ có tối đa 1 record. */
-  guestSlug: string;
-  /** Tên khách (denormalize để admin xem nhanh). */
+  /** Khoá theo khách mời — mỗi guest slug chỉ có tối đa 1 record. Không có =
+   *  khách vào bằng thiệp chung và tự điền tên, nên không gộp được record. */
+  guestSlug?: string;
+  /** Tên khách: lấy từ danh sách mời, hoặc do khách tự điền. */
   guestName: string;
   attendance: Attendance;
   /** Số người tham dự (0 khi không đi). */
@@ -114,7 +131,7 @@ export interface Guest {
   name: string;
   /** Chú thích nội bộ cho admin, vd "bạn đại học chú rể". */
   note: string;
-  /** Mời dự tiệc nhà nào. Không có = hiển thị cả hai nhà. */
+  /** Mời dự tiệc nhà nào. Không có = mặc định nhà trai. */
   side?: WeddingSide;
   createdAt: string;
 }

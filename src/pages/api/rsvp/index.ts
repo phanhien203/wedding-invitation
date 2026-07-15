@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { isAdminRequest } from "@/lib/auth";
+import { MAX_RSVP_NAME_LENGTH } from "@/constants";
 import { readGuests, readRsvps, writeRsvps } from "@/lib/data";
 import { createId } from "@/utils/id";
 import type { Rsvp } from "@/types";
@@ -17,16 +18,28 @@ export default async function handler(
   }
 
   if (req.method === "POST") {
-    const { slug, attendance, guests, message } = req.body ?? {};
+    const { slug, name, attendance, guests, message } = req.body ?? {};
 
-    if (!slug || (attendance !== "yes" && attendance !== "no")) {
+    if (attendance !== "yes" && attendance !== "no") {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Chỉ khách trong danh sách mời (link hợp lệ) mới được xác nhận.
-    const guest = (await readGuests()).find((g) => g.slug === slug);
-    if (!guest) {
-      return res.status(403).json({ error: "Invalid invitation" });
+    // Có slug = thiệp mời riêng, phải là khách trong danh sách. Không slug =
+    // thiệp chung, khách tự khai tên.
+    let guestName: string;
+    if (slug) {
+      const guest = (await readGuests()).find((g) => g.slug === slug);
+      if (!guest) {
+        return res.status(403).json({ error: "Invalid invitation" });
+      }
+      guestName = guest.name;
+    } else {
+      guestName = String(name ?? "")
+        .trim()
+        .slice(0, MAX_RSVP_NAME_LENGTH);
+      if (!guestName) {
+        return res.status(400).json({ error: "Vui lòng nhập tên của bạn" });
+      }
     }
 
     const rsvps = await readRsvps();
@@ -38,9 +51,11 @@ export default async function handler(
     const cleanMessage = String(message ?? "").trim();
 
     // Upsert theo guestSlug — mỗi khách chỉ 1 record, quay lại thì cập nhật.
-    const existing = rsvps.find((r) => r.guestSlug === slug);
+    // Thiệp chung không có slug nên không nhận diện được ai với ai: mỗi lần gửi
+    // là một record mới, admin tự dọn nếu trùng.
+    const existing = slug ? rsvps.find((r) => r.guestSlug === slug) : undefined;
     if (existing) {
-      existing.guestName = guest.name;
+      existing.guestName = guestName;
       existing.attendance = attendance;
       existing.guests = numGuests;
       existing.message = cleanMessage;
@@ -51,8 +66,8 @@ export default async function handler(
 
     const rsvp: Rsvp = {
       id: createId(),
-      guestSlug: slug,
-      guestName: guest.name,
+      ...(slug ? { guestSlug: slug } : {}),
+      guestName,
       attendance,
       guests: numGuests,
       message: cleanMessage,

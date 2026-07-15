@@ -29,11 +29,24 @@ export default function InvitationIntro({
   const [blooming, setBlooming] = useState(false);
   const [opening, setOpening] = useState(false);
   const [done, setDone] = useState(false);
+  const [wide, setWide] = useState(false);
   const { setPlaying, setVolume } = useMusicStore();
 
+  // scale là giá trị JS nên không theo breakpoint của Tailwind được. Màn hẹp thì
+  // hoa vốn đã tràn ra ngoài, phóng mạnh nữa là bay khỏi màn hình nên phải nhẹ tay.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const sync = () => setWide(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  const bloomScale = wide ? 1.4 : 1.12;
+
   // Bấm "Mở thiệp": phát nhạc ở 50% (cú click là hành vi người dùng nên trình
-  // duyệt cho phép autoplay), chạy hiệu ứng "nở" (tim lan tỏa + hoa hai bên bung
-  // ra), rồi sau ~1s mới mở rèm.
+  // duyệt cho phép autoplay), chạy hiệu ứng "nở" (tim lan tỏa + hoa hai bên to
+  // dần ra), rồi sau ~1s mới mở rèm.
   const handleOpen = () => {
     if (blooming || opening) return;
     setVolume(0.5);
@@ -108,18 +121,19 @@ export default function InvitationIntro({
         transition={{ duration: 0.45, ease: "easeOut" }}
       >
         <div className="relative w-full max-w-sm">
-          {/* Hoa trái (nở ra từ mép phải-dưới, hướng ra ngoài). */}
+          {/* Hoa trái: có sẵn từ đầu, bấm mở thiệp thì to dần ra phía ngoài
+              (gốc phóng ở mép phải-dưới nên nó nở về hướng trái-trên). */}
           <motion.div
             aria-hidden
-            className="pointer-events-none absolute -left-12 -top-2 z-20 w-48 sm:-left-20 sm:w-64"
+            className="pointer-events-none absolute -top-2 left-0 z-20 w-[7.5rem] sm:w-48"
             style={{ transformOrigin: "bottom right" }}
-            initial={{ opacity: 0, scale: 0.3, rotate: -14 }}
-            animate={
-              blooming
-                ? { opacity: 1, scale: 1, rotate: 0 }
-                : { opacity: 0, scale: 0.3, rotate: -14 }
-            }
-            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
+            initial={{ opacity: 0, scale: 0.86, rotate: -8 }}
+            animate={{ opacity: 0.5, scale: blooming ? bloomScale : 1, rotate: 0 }}
+            transition={{
+              duration: blooming ? 1.6 : 0.9,
+              ease: [0.22, 1, 0.36, 1],
+              delay: blooming ? 0 : 0.25,
+            }}
           >
             <Image
               src="/images/flower.webp"
@@ -130,18 +144,18 @@ export default function InvitationIntro({
             />
           </motion.div>
 
-          {/* Hoa phải (lật ngang, nở ra từ mép trái-trên). */}
+          {/* Hoa phải: lật ngang cho đối xứng, gốc phóng ở mép trái-trên. */}
           <motion.div
             aria-hidden
-            className="pointer-events-none absolute -right-12 -bottom-2 z-20 w-48 sm:-right-20 sm:w-64"
+            className="pointer-events-none absolute -bottom-2 right-0 z-20 w-[7.5rem] sm:w-48"
             style={{ transformOrigin: "top left" }}
-            initial={{ opacity: 0, scale: 0.3, rotate: 14 }}
-            animate={
-              blooming
-                ? { opacity: 1, scale: 1, rotate: 0 }
-                : { opacity: 0, scale: 0.3, rotate: 14 }
-            }
-            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+            initial={{ opacity: 0, scale: 0.86, rotate: 8 }}
+            animate={{ opacity: 0.5, scale: blooming ? bloomScale : 1, rotate: 0 }}
+            transition={{
+              duration: blooming ? 1.6 : 0.9,
+              ease: [0.22, 1, 0.36, 1],
+              delay: blooming ? 0.1 : 0.35,
+            }}
           >
             <Image
               src="/images/flower.webp"

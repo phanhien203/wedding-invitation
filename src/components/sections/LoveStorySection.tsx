@@ -3,12 +3,175 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Heart } from "lucide-react";
 import Section from "@/components/ui/Section";
+import ImageViewer from "@/components/ImageViewer";
+import { MAX_TIMELINE_PHOTOS } from "@/constants";
 import { cn } from "@/lib/cn";
 import type { TimelineItem } from "@/types";
 
 interface LoveStorySectionProps {
   timeline: TimelineItem[];
 }
+
+const FULL = "(max-width: 640px) 70vw, 272px";
+const HALF = "(max-width: 640px) 35vw, 136px";
+const THIRD = "(max-width: 640px) 24vw, 90px";
+
+/** Số ô tối đa trên thẻ; ảnh dư dồn vào nhãn "+N" ở ô cuối. */
+const MAX_TILES = 4;
+
+function Tile({
+  src,
+  alt,
+  ratio,
+  sizes,
+  className,
+  more,
+  onOpen,
+}: {
+  src: string;
+  alt: string;
+  ratio: string;
+  sizes: string;
+  className?: string;
+  /** Số ảnh còn lại không có ô riêng, hiện đè lên ô này. */
+  more?: number;
+  onOpen: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        // block w-full: button mặc định inline-block, mà ảnh bên trong là fill
+        // (absolute) nên không có gì đẩy chiều rộng — để nguyên là ô rộng 0.
+        "group relative block w-full overflow-hidden bg-sage-100",
+        ratio,
+        className
+      )}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className="object-cover transition duration-500 group-hover:scale-105"
+        sizes={sizes}
+      />
+      {more ? (
+        <span className="absolute inset-0 flex items-center justify-center bg-black/45 font-serif text-lg text-white">
+          +{more}
+        </span>
+      ) : (
+        <span className="absolute inset-0 bg-black/0 transition group-hover:bg-black/15" />
+      )}
+    </button>
+  );
+}
+
+/**
+ * Thẻ mốc chỉ rộng 17rem nên nhồi cả chục ảnh vào là mỗi ảnh còn cỡ con tem.
+ * Thẻ chỉ bày tối đa 4 ô, phần dư gộp vào "+N"; bấm ô nào cũng mở lightbox xem
+ * đủ. Bố cục đổi theo số ảnh để không có ô nào bị hụt.
+ */
+function PhotoCollage({
+  photos,
+  alt,
+  onOpen,
+}: {
+  photos: string[];
+  alt: string;
+  onOpen: (index: number) => void;
+}) {
+  if (!photos.length) return null;
+
+  if (photos.length === 1) {
+    return (
+      <Tile
+        src={photos[0]}
+        alt={alt}
+        ratio="aspect-[4/5]"
+        sizes={FULL}
+        onOpen={() => onOpen(0)}
+      />
+    );
+  }
+
+  if (photos.length === 2) {
+    return (
+      <div className="grid grid-cols-2 gap-1">
+        {photos.map((src, i) => (
+          <Tile
+            key={i}
+            src={src}
+            alt={alt}
+            ratio="aspect-[3/4]"
+            sizes={HALF}
+            onOpen={() => onOpen(i)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (photos.length === 3) {
+    return (
+      <div className="grid grid-cols-2 gap-1">
+        <Tile
+          src={photos[0]}
+          alt={alt}
+          ratio="aspect-[16/10]"
+          sizes={FULL}
+          className="col-span-2"
+          onOpen={() => onOpen(0)}
+        />
+        <Tile
+          src={photos[1]}
+          alt={alt}
+          ratio="aspect-square"
+          sizes={HALF}
+          onOpen={() => onOpen(1)}
+        />
+        <Tile
+          src={photos[2]}
+          alt={alt}
+          ratio="aspect-square"
+          sizes={HALF}
+          onOpen={() => onOpen(2)}
+        />
+      </div>
+    );
+  }
+
+  const tiles = photos.slice(0, MAX_TILES);
+  const hidden = photos.length - tiles.length;
+
+  return (
+    <div className="grid grid-cols-3 gap-1">
+      <Tile
+        src={tiles[0]}
+        alt={alt}
+        ratio="aspect-[16/10]"
+        sizes={FULL}
+        className="col-span-3"
+        onOpen={() => onOpen(0)}
+      />
+      {tiles.slice(1).map((src, i) => (
+        <Tile
+          key={i + 1}
+          src={src}
+          alt={alt}
+          ratio="aspect-square"
+          sizes={THIRD}
+          more={hidden > 0 && i === tiles.length - 2 ? hidden : undefined}
+          onOpen={() => onOpen(i + 1)}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Chặn cứng ở tầng hiển thị, phòng dữ liệu cũ lỡ có nhiều ảnh hơn giới hạn. */
+const photosOf = (item: TimelineItem) =>
+  (item.images ?? []).slice(0, MAX_TIMELINE_PHOTOS);
 
 /** Tính sẵn: mỗi mốc nằm bên nào (so le) và có mở đầu một chương mới không. */
 function buildRows(timeline: TimelineItem[]) {
@@ -25,6 +188,11 @@ export default function LoveStorySection({ timeline }: LoveStorySectionProps) {
   // Mặc định thu gọn: câu chuyện khá dài nên để khách xem thông tin quan trọng
   // trước, ai muốn thì bấm mở.
   const [open, setOpen] = useState(false);
+  // Lightbox dùng chung cho mọi mốc: mở mốc nào thì nạp đúng bộ ảnh của mốc đó.
+  const [viewer, setViewer] = useState<{
+    photos: string[];
+    index: number;
+  } | null>(null);
 
   if (!timeline.length) return null;
 
@@ -111,17 +279,16 @@ export default function LoveStorySection({ timeline }: LoveStorySectionProps) {
                       )}
                     >
                       <div className="w-full max-w-[17rem] overflow-hidden rounded-2xl border border-sage-100 bg-white text-left shadow-sm">
-                        {item.image && (
-                          <div className="relative aspect-[4/5]">
-                            <Image
-                              src={item.image}
-                              alt={item.title}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 640px) 70vw, 272px"
-                            />
-                          </div>
-                        )}
+                        <PhotoCollage
+                          photos={photosOf(item)}
+                          alt={item.title}
+                          onOpen={(photoIndex) =>
+                            setViewer({
+                              photos: photosOf(item),
+                              index: photoIndex,
+                            })
+                          }
+                        />
                         <div className="p-4">
                           <span className="text-xs font-semibold tracking-wide text-sage-700">
                             {item.date}
@@ -149,6 +316,12 @@ export default function LoveStorySection({ timeline }: LoveStorySectionProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ImageViewer
+        images={viewer?.photos ?? []}
+        openIndex={viewer?.index ?? null}
+        onClose={() => setViewer(null)}
+      />
     </Section>
   );
 }

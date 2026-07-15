@@ -57,6 +57,22 @@ async function readData<T>(
   return fallback;
 }
 
+/**
+ * Mốc timeline đời đầu chỉ có một ảnh ở field `image`. Gộp về mảng `images` ngay
+ * lúc đọc để phần còn lại của app chỉ phải biết một dạng dữ liệu; bản ghi cũ tự
+ * hết field `image` sau lần lưu đầu tiên trong admin.
+ */
+function normalizeTimeline(config: WeddingConfig): WeddingConfig {
+  if (!config.timeline?.length) return config;
+  return {
+    ...config,
+    timeline: config.timeline.map(({ image, ...item }) => ({
+      ...item,
+      images: item.images ?? (image ? [image] : []),
+    })),
+  };
+}
+
 export async function readWeddingConfig(): Promise<WeddingConfig> {
   const config =
     (await readData<WeddingConfig>("wedding", "wedding.json", null)) ??
@@ -66,7 +82,7 @@ export async function readWeddingConfig(): Promise<WeddingConfig> {
       "Missing wedding config: expected MongoDB 'wedding' or data/wedding.json."
     );
   }
-  return config;
+  return normalizeTimeline(config);
 }
 
 export async function writeWeddingConfig(config: WeddingConfig): Promise<void> {

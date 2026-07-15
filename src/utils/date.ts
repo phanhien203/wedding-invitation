@@ -2,6 +2,7 @@ import dayjs from "dayjs";
 import duration from "dayjs/plugin/duration";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import type { EventInfo, WeddingSide } from "@/types";
+import { resolveSide } from "@/utils/side";
 
 dayjs.extend(duration);
 dayjs.extend(customParseFormat);
@@ -25,8 +26,7 @@ export function resolveSideDate(
   side: WeddingSide | null | undefined,
   fallbackIso: string
 ): string {
-  const target: WeddingSide = side === "bride" ? "bride" : "groom";
-  const event = events.find((e) => e.side === target);
+  const event = events.find((e) => e.side === resolveSide(side));
   const parsed = event?.date ? parseEventDate(event.date) : null;
   return parsed ? parsed.format("YYYY-MM-DD") : fallbackIso;
 }

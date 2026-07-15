@@ -1,117 +1,149 @@
-import { useEffect } from "react";
-import fs from "fs";
-import path from "path";
-import type { GetStaticProps } from "next";
 import Head from "next/head";
-import Image from "next/image";
-import AOS from "aos";
-import AlbumSlider from "@/components/AlbumSlider";
+import { GetServerSideProps } from "next";
+import MainLayout from "@/layouts/MainLayout";
+import InvitationIntro from "@/components/InvitationIntro";
+import HeroSection from "@/components/sections/HeroSection";
+import CoupleSection from "@/components/sections/CoupleSection";
+import CeremonyInfoSection from "@/components/sections/CeremonyInfoSection";
+import LoveStorySection from "@/components/sections/LoveStorySection";
+import GallerySection from "@/components/sections/GallerySection";
+import EventSection from "@/components/sections/EventSection";
+import MapSection from "@/components/sections/MapSection";
+import ScheduleSection from "@/components/sections/ScheduleSection";
+import GiftSection from "@/components/sections/GiftSection";
+import RsvpSection from "@/components/sections/RsvpSection";
+import WishesSection from "@/components/sections/WishesSection";
+import FooterSection from "@/components/sections/FooterSection";
+import {
+  readGuests,
+  readRsvps,
+  readWeddingConfig,
+  readWishes,
+} from "@/lib/data";
+import { resolveSideDate } from "@/utils/date";
+import type { Rsvp, WeddingConfig, WeddingSide, Wish } from "@/types";
 
-interface HomeProps {
-  images: string[];
+interface InvitationProps {
+  wedding: WeddingConfig;
+  wishes: Wish[];
+  inviteeName: string | null;
+  inviteeSide: WeddingSide | null;
+  guestSlug: string | null;
+  initialRsvp: Rsvp | null;
 }
 
-export default function Home({ images }: HomeProps) {
-  useEffect(() => {
-    AOS.init({
-      duration: 1000,
-      easing: "ease-out-cubic",
-      once: true,
-    });
-  }, []);
+export default function Invitation({
+  wedding,
+  wishes,
+  inviteeName,
+  inviteeSide,
+  guestSlug,
+  initialRsvp,
+}: InvitationProps) {
+  const title = `${wedding.brideName} & ${wedding.groomName} · Wedding Invitation`;
+  const description = `Thiệp mời đám cưới ${wedding.brideName} & ${wedding.groomName}`;
+
+  // Ngày hiển thị theo nhà của khách (nhà gái → ngày nhà gái; còn lại → nhà trai).
+  const displayDate = resolveSideDate(
+    wedding.events,
+    inviteeSide,
+    wedding.weddingDate
+  );
 
   return (
     <>
       <Head>
-        <title>Sắp ra mắt</title>
-        <meta name="description" content="Sắp ra mắt" />
+        <title>{title}</title>
+        <meta name="description" content={description} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content={wedding.coverImage} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-
-      {/* Hero */}
-      <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
-        <Image
-          src="/images/welcome.jpg"
-          alt="Welcome"
-          fill
-          priority
-          className="object-cover"
+      <InvitationIntro
+        brideName={wedding.brideName}
+        groomName={wedding.groomName}
+        weddingDate={displayDate}
+        inviteeName={inviteeName}
+      />
+      {/* Ảnh hero full-width, nằm ngoài cột nội dung. */}
+      <HeroSection
+        brideName={wedding.brideName}
+        groomName={wedding.groomName}
+        weddingDate={displayDate}
+        coverImage={wedding.coverImage}
+        inviteeName={inviteeName}
+      />
+      <MainLayout>
+        <CoupleSection
+          bride={wedding.bride}
+          groom={wedding.groom}
+          brideName={wedding.brideName}
+          groomName={wedding.groomName}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/50 via-ink/40 to-ink/60" />
-
-        <div className="relative z-10 flex flex-col items-center px-6 text-center text-cream">
-          <span
-            className="mb-6 text-xs uppercase tracking-[0.5em] text-gold sm:text-sm"
-            data-aos="fade-down"
-            data-aos-delay="100"
-          >
-            Wedding Invitation
-          </span>
-
-          <h1
-            className="font-serif text-5xl font-semibold leading-tight drop-shadow-lg sm:text-7xl lg:text-8xl"
-            data-aos="zoom-in"
-            data-aos-delay="250"
-          >
-            Sắp ra mắt
-          </h1>
-
-          <div
-            className="mt-8 h-px w-24 bg-gold/80"
-            data-aos="fade-up"
-            data-aos-delay="450"
-          />
-
-          <p
-            className="mt-8 max-w-md text-sm font-light leading-relaxed text-cream/80 sm:text-base"
-            data-aos="fade-up"
-            data-aos-delay="600"
-          >
-            Chúng tôi đang chuẩn bị những điều đặc biệt nhất. Hãy quay lại sớm
-            nhé!
-          </p>
-        </div>
-      </section>
-
-      {/* Album ảnh */}
-      {images.length > 0 && (
-        <section className="bg-sage-50 py-20 sm:py-28">
-          <div className="container-page">
-            <div className="mb-12 text-center" data-aos="fade-up">
-              <p className="mb-3 text-xs uppercase tracking-[0.4em] text-gold">
-                Khoảnh khắc
-              </p>
-              <h2 className="font-serif text-4xl font-semibold text-ink sm:text-5xl">
-                Album ảnh
-              </h2>
-              <p className="mx-auto mt-4 max-w-md text-sm text-ink/60">
-                Nhấn vào ảnh để xem chi tiết và phóng to.
-              </p>
-            </div>
-
-            <div data-aos="fade-up" data-aos-delay="150">
-              <AlbumSlider images={images} />
-            </div>
-          </div>
-        </section>
-      )}
+        <CeremonyInfoSection
+          parents={wedding.parents}
+          groom={wedding.groom}
+          bride={wedding.bride}
+          events={wedding.events}
+          side={inviteeSide}
+        />
+        <LoveStorySection timeline={wedding.timeline} />
+        <GallerySection images={wedding.gallery} />
+        <EventSection
+          events={wedding.events}
+          side={inviteeSide}
+          weddingDate={displayDate}
+        />
+        <MapSection venues={wedding.venues} side={inviteeSide} />
+        <ScheduleSection schedule={wedding.schedule ?? []} />
+        <GiftSection gift={wedding.gift} />
+        {/* Thiệp chung cũng xác nhận được, chỉ khác là khách phải tự điền tên. */}
+        <RsvpSection
+          slug={guestSlug}
+          guestName={inviteeName}
+          initialRsvp={initialRsvp}
+        />
+        <WishesSection initialWishes={wishes} inviteeName={inviteeName} />
+        <FooterSection
+          musicSrc={wedding.music}
+          brideName={wedding.brideName}
+          groomName={wedding.groomName}
+          bride={wedding.bride}
+          groom={wedding.groom}
+        />
+      </MainLayout>
     </>
   );
 }
 
-export const getStaticProps: GetStaticProps<HomeProps> = async () => {
-  const albumDir = path.join(process.cwd(), "public", "album");
-  let images: string[] = [];
+export const getServerSideProps: GetServerSideProps<InvitationProps> = async (
+  ctx
+) => {
+  const slug = typeof ctx.query.to === "string" ? ctx.query.to : null;
 
-  try {
-    images = fs
-      .readdirSync(albumDir)
-      .filter((file) => /\.(jpe?g|png|webp|gif|avif)$/i.test(file))
-      .sort()
-      .map((file) => `/album/${file}`);
-  } catch {
-    images = [];
-  }
+  const [wedding, allWishes, guests, rsvps] = await Promise.all([
+    readWeddingConfig(),
+    readWishes(),
+    slug ? readGuests() : Promise.resolve([]),
+    slug ? readRsvps() : Promise.resolve([]),
+  ]);
 
-  return { props: { images } };
+  // Chỉ hiển thị lời chúc admin không ẩn.
+  const wishes = allWishes.filter((w) => !w.hidden);
+
+  // Chỉ slug đã lưu mới là thiệp mời hợp lệ — param bừa sẽ không ra tên khách.
+  const guest = slug ? (guests.find((g) => g.slug === slug) ?? null) : null;
+  const inviteeName = guest?.name ?? null;
+  const inviteeSide = guest?.side ?? null;
+  const guestSlug = guest?.slug ?? null;
+  // Trạng thái xác nhận trước đó của khách (nếu có) để hiện lại và cập nhật.
+  const initialRsvp = guest
+    ? (rsvps.find((r) => r.guestSlug === guest.slug) ?? null)
+    : null;
+
+  return {
+    props: { wedding, wishes, inviteeName, inviteeSide, guestSlug, initialRsvp },
+  };
 };

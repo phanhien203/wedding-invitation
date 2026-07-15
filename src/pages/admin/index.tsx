@@ -2,21 +2,31 @@ import { useEffect, useState } from "react";
 import { useForm, type UseFormReturn } from "react-hook-form";
 import dynamic from "next/dynamic";
 import Head from "next/head";
+import Image from "next/image";
 import { Copy, Check, Eye, EyeOff, LogOut, Trash2, Upload } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import QrCropper from "@/components/admin/QrCropper";
+import {
+  MAX_TIMELINE_PHOTOS,
+  MAX_UPLOAD_BYTES,
+  MAX_UPLOAD_MB,
+} from "@/constants";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import Toast, { type ToastState } from "@/components/ui/Toast";
 import {
   adminLogin,
   adminLogout,
+  apiErrorMessage,
   checkAdminSession,
   createGuest,
   deleteGuest,
+  deleteImage,
   deleteRsvp,
   deleteWish,
   fetchGuests,
   fetchRsvps,
+  fetchUploads,
   fetchWeddingConfig,
   geocodeMapUrl,
   setWishHidden,
@@ -29,6 +39,7 @@ import type {
   Guest,
   Rsvp,
   TimelineItem,
+  UploadedImage,
   WeddingConfig,
   WeddingSide,
   Wish,
@@ -45,6 +56,7 @@ type GeoStatus = "loading" | "done" | "error";
 type Tab =
   | "info"
   | "gallery"
+  | "uploads"
   | "timeline"
   | "schedule"
   | "guests"
@@ -60,23 +72,24 @@ function AdminHome() {
   const [rsvps, setRsvps] = useState<Rsvp[]>([]);
   const [wishes, setWishes] = useState<Wish[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
+  const [uploads, setUploads] = useState<UploadedImage[]>([]);
   const [newGuestName, setNewGuestName] = useState("");
   const [newGuestNote, setNewGuestNote] = useState("");
-  const [newGuestSide, setNewGuestSide] = useState<WeddingSide | "">("");
+  const [newGuestSide, setNewGuestSide] = useState<WeddingSide>("groom");
   const [addingGuest, setAddingGuest] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [qrCropSrc, setQrCropSrc] = useState<string | null>(null);
   const [audioUploading, setAudioUploading] = useState(false);
   const [audioError, setAudioError] = useState("");
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [geoStatus, setGeoStatus] = useState<{
     groom?: GeoStatus;
     bride?: GeoStatus;
   }>({});
 
   const form = useForm<WeddingConfig>();
-  const { register, handleSubmit, reset, setValue } = form;
+  const { register, handleSubmit, reset, setValue, watch, getValues } = form;
 
   const handleGeocode = async (side: "groom" | "bride", url: string) => {
     if (!url.trim()) {
@@ -104,13 +117,15 @@ function AdminHome() {
   }, [authenticated]);
 
   const loadData = async () => {
-    const [wedding, rsvpList] = await Promise.all([
+    const [wedding, rsvpList, uploadList] = await Promise.all([
       fetchWeddingConfig(),
       fetchRsvps(),
+      fetchUploads(),
     ]);
     setConfig(wedding);
     reset(wedding);
     setRsvps(rsvpList);
+    setUploads(uploadList);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -130,17 +145,55 @@ function AdminHome() {
     setConfig(null);
   };
 
+  const showToast = (text: string, variant: ToastState["variant"]) =>
+    setToast({ id: Date.now(), text, variant });
+
   const onSave = async (data: WeddingConfig) => {
     setSaving(true);
-    setMessage("");
     try {
       const updated = await updateWeddingConfig(data);
       setConfig(updated);
-      setMessage("Đã lưu thành công!");
+      showToast("Đã lưu thành công!", "success");
     } catch {
-      setMessage("Lưu thất bại. Vui lòng thử lại.");
+      showToast("Lưu thất bại. Vui lòng thử lại.", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  /**
+   * `config` chỉ là ảnh chụp lúc tải/lưu, còn thứ đang gõ dở nằm trong form.
+   * Mọi thao tác thêm/xoá/upload phải dựng từ getValues() rồi mới reset, chứ
+   * dựng từ `config` thì reset sẽ ghi đè và nuốt sạch phần chưa lưu.
+   */
+  const applyConfig = (change: (current: WeddingConfig) => WeddingConfig) => {
+    const updated = change(getValues());
+    setConfig(updated);
+    reset(updated, { keepDirty: true });
+  };
+
+  /**
+   * Mọi upload ảnh đi qua đây: chặn sớm file quá cỡ và luôn hiện lý do khi hỏng.
+   * Trước đây lỗi bị ném thẳng ra ngoài — dev thấy overlay đỏ, còn người dùng
+   * thật thì bấm upload xong không thấy gì xảy ra.
+   */
+  const tryUploadImage = async (file: File): Promise<string | null> => {
+    if (file.size > MAX_UPLOAD_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1);
+      showToast(
+        `Ảnh ${mb}MB, vượt giới hạn ${MAX_UPLOAD_MB}MB. Chọn ảnh nhẹ hơn nhé.`,
+        "error"
+      );
+      return null;
+    }
+    try {
+      const url = await uploadImage(file);
+      // Nạp lại để tab quản lý ảnh thấy ngay file vừa lên.
+      fetchUploads().then(setUploads).catch(() => {});
+      return url;
+    } catch (error) {
+      showToast(apiErrorMessage(error, "Upload ảnh thất bại."), "error");
+      return null;
     }
   };
 
@@ -150,14 +203,13 @@ function AdminHome() {
   ) => {
     const file = e.target.files?.[0];
     if (!file || !config) return;
-    const url = await uploadImage(file);
-    const updated = {
-      ...config,
-      [person]: { ...config[person], photo: url },
-    };
-    setConfig(updated);
-    reset(updated);
+    const url = await tryUploadImage(file);
     e.target.value = "";
+    if (!url) return;
+    applyConfig((current) => ({
+      ...current,
+      [person]: { ...current[person], photo: url },
+    }));
   };
   const handleImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -166,19 +218,15 @@ function AdminHome() {
     const file = e.target.files?.[0];
     if (!file || !config) return;
 
-    const url = await uploadImage(file);
-
-    if (field === "gallery") {
-      const gallery = [...config.gallery, url];
-      const updated = { ...config, gallery };
-      setConfig(updated);
-      reset(updated);
-    } else {
-      const updated = { ...config, [field]: url };
-      setConfig(updated);
-      reset(updated);
-    }
+    const url = await tryUploadImage(file);
     e.target.value = "";
+    if (!url) return;
+
+    applyConfig((current) =>
+      field === "gallery"
+        ? { ...current, gallery: [...current.gallery, url] }
+        : { ...current, [field]: url }
+    );
   };
 
   const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,9 +236,7 @@ function AdminHome() {
     setAudioUploading(true);
     try {
       const url = await uploadAudio(file, config.music);
-      const updated = { ...config, music: url };
-      setConfig(updated);
-      reset(updated);
+      applyConfig((current) => ({ ...current, music: url }));
     } catch {
       setAudioError("Upload thất bại. Chỉ chấp nhận file mp3.");
     } finally {
@@ -210,64 +256,93 @@ function AdminHome() {
 
   const handleQrCropped = async (file: File) => {
     if (!config) return;
-    const url = await uploadImage(file);
-    const updated = { ...config, gift: { ...config.gift, qrImage: url } };
-    setConfig(updated);
-    reset(updated);
+    const url = await tryUploadImage(file);
+    if (!url) return;
+    applyConfig((current) => ({
+      ...current,
+      gift: { ...current.gift, qrImage: url },
+    }));
     setQrCropSrc(null);
   };
 
   const removeGalleryImage = (index: number) => {
     if (!config) return;
-    const gallery = config.gallery.filter((_, i) => i !== index);
-    const updated = { ...config, gallery };
-    setConfig(updated);
-    reset(updated);
+    applyConfig((current) => ({
+      ...current,
+      gallery: current.gallery.filter((_, i) => i !== index),
+    }));
   };
 
   const addTimelineItem = () => {
     if (!config) return;
+    // Không set images: mốc mới mặc định không ảnh, muốn thì thêm sau.
     const item: TimelineItem = {
       id: createId(),
       date: "",
       title: "",
       description: "",
-      image: "",
       chapter: "",
     };
-    const updated = { ...config, timeline: [...config.timeline, item] };
-    setConfig(updated);
-    reset(updated);
+    applyConfig((current) => ({
+      ...current,
+      timeline: [...current.timeline, item],
+    }));
   };
 
   const removeTimelineItem = (id: string) => {
     if (!config) return;
-    const updated = {
-      ...config,
-      timeline: config.timeline.filter((t) => t.id !== id),
-    };
-    setConfig(updated);
-    reset(updated);
+    applyConfig((current) => ({
+      ...current,
+      timeline: current.timeline.filter((t) => t.id !== id),
+    }));
   };
+
+  // Ảnh của mốc là tuỳ chọn: danh sách rỗng = mốc chỉ có chữ.
+  const photosOf = (index: number) => watch(`timeline.${index}.images`) ?? [];
+
+  const setPhotos = (index: number, photos: string[]) =>
+    setValue(`timeline.${index}.images`, photos, { shouldDirty: true });
+
+  const addTimelinePhoto = (index: number) => {
+    const photos = photosOf(index);
+    if (photos.length >= MAX_TIMELINE_PHOTOS) return;
+    setPhotos(index, [...photos, ""]);
+  };
+
+  const handleTimelinePhotoUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const photos = photosOf(index);
+    if (photos.length >= MAX_TIMELINE_PHOTOS) return;
+    const url = await tryUploadImage(file);
+    e.target.value = "";
+    if (!url) return;
+    setPhotos(index, [...photos, url]);
+  };
+
+  const removeTimelinePhoto = (index: number, at: number) =>
+    setPhotos(
+      index,
+      photosOf(index).filter((_, i) => i !== at)
+    );
 
   const addScheduleItem = () => {
     if (!config) return;
-    const updated = {
-      ...config,
-      schedule: [...(config.schedule ?? []), { time: "", activity: "" }],
-    };
-    setConfig(updated);
-    reset(updated);
+    applyConfig((current) => ({
+      ...current,
+      schedule: [...(current.schedule ?? []), { time: "", activity: "" }],
+    }));
   };
 
   const removeScheduleItem = (index: number) => {
     if (!config) return;
-    const updated = {
-      ...config,
-      schedule: (config.schedule ?? []).filter((_, i) => i !== index),
-    };
-    setConfig(updated);
-    reset(updated);
+    applyConfig((current) => ({
+      ...current,
+      schedule: (current.schedule ?? []).filter((_, i) => i !== index),
+    }));
   };
 
   const handleDeleteRsvp = async (id: string) => {
@@ -297,8 +372,8 @@ function AdminHome() {
 
   const guestLink = (slug: string) =>
     typeof window !== "undefined"
-      ? `${window.location.origin}/client?to=${slug}`
-      : `/client?to=${slug}`;
+      ? `${window.location.origin}/?to=${slug}`
+      : `/?to=${slug}`;
 
   const handleAddGuest = async () => {
     const name = newGuestName.trim();
@@ -313,19 +388,18 @@ function AdminHome() {
       setGuests((prev) => [guest, ...prev]);
       setNewGuestName("");
       setNewGuestNote("");
-      setNewGuestSide("");
-      setMessage("Đã thêm khách mời!");
+      setNewGuestSide("groom");
+      showToast("Đã thêm khách mời!", "success");
     } catch {
-      setMessage("Thêm khách mời thất bại. Vui lòng thử lại.");
+      showToast("Thêm khách mời thất bại. Vui lòng thử lại.", "error");
     } finally {
       setAddingGuest(false);
     }
   };
 
-  const handleGuestSide = async (guest: Guest, side: WeddingSide | "") => {
-    const nextSide = side === "" ? undefined : side;
+  const handleGuestSide = async (guest: Guest, side: WeddingSide) => {
     setGuests((prev) =>
-      prev.map((g) => (g.id === guest.id ? { ...g, side: nextSide } : g))
+      prev.map((g) => (g.id === guest.id ? { ...g, side } : g))
     );
     try {
       await updateGuest(guest.id, { side });
@@ -333,6 +407,41 @@ function AdminHome() {
       setGuests((prev) =>
         prev.map((g) => (g.id === guest.id ? { ...g, side: guest.side } : g))
       );
+    }
+  };
+
+  /**
+   * Ảnh đang được gắn ở những đâu. Đọc từ getValues() chứ không từ `config` để
+   * tính cả những chỗ vừa gắn mà chưa bấm Lưu — nếu không sẽ báo "chưa dùng" rồi
+   * xoá mất ảnh người ta vừa chọn.
+   */
+  const usageOf = (url: string): string[] => {
+    const current = getValues();
+    const where: string[] = [];
+    if (current.gallery?.includes(url)) where.push("Gallery");
+    if (current.timeline?.some((t) => t.images?.includes(url))) {
+      where.push("Câu chuyện tình yêu");
+    }
+    if (current.bride?.photo === url) where.push("Ảnh cô dâu");
+    if (current.groom?.photo === url) where.push("Ảnh chú rể");
+    if (current.gift?.qrImage === url) where.push("QR mừng cưới");
+    return where;
+  };
+
+  const handleDeleteUpload = async (item: UploadedImage) => {
+    const used = usageOf(item.url);
+    const warning = used.length
+      ? `CẢNH BÁO: ảnh đang hiển thị ở ${used.join(", ")}. Xoá là chỗ đó vỡ ảnh.\n\n`
+      : "";
+    if (!window.confirm(`${warning}Xoá ${item.filename}? Không khôi phục được.`)) {
+      return;
+    }
+    try {
+      await deleteImage(item.filename);
+      setUploads((prev) => prev.filter((u) => u.filename !== item.filename));
+      showToast("Đã xoá ảnh.", "success");
+    } catch (error) {
+      showToast(apiErrorMessage(error, "Xoá ảnh thất bại."), "error");
     }
   };
 
@@ -389,6 +498,7 @@ function AdminHome() {
   const tabs: { id: Tab; label: string }[] = [
     { id: "info", label: "Thông tin" },
     { id: "gallery", label: "Gallery" },
+    { id: "uploads", label: "Ảnh đã upload" },
     { id: "timeline", label: "Timeline" },
     { id: "schedule", label: "Lịch trình" },
     { id: "guests", label: "Khách mời" },
@@ -435,9 +545,7 @@ function AdminHome() {
           </Button>
         </div>
 
-        {message && (
-          <p className="mb-4 text-sm text-sage-700">{message}</p>
-        )}
+        <Toast toast={toast} onDismiss={() => setToast(null)} />
 
         {config && (
           <form onSubmit={handleSubmit(onSave)} className="space-y-6">
@@ -490,6 +598,22 @@ function AdminHome() {
                 <Input
                   label="Vai vế chú rể (vd Út Nam)"
                   {...register("groom.role")}
+                />
+                <Input
+                  label="SĐT cô dâu (hiện ở footer)"
+                  {...register("bride.phone")}
+                />
+                <Input
+                  label="SĐT chú rể (hiện ở footer)"
+                  {...register("groom.phone")}
+                />
+                <Input
+                  label="Facebook cô dâu (link)"
+                  {...register("bride.facebook")}
+                />
+                <Input
+                  label="Facebook chú rể (link)"
+                  {...register("groom.facebook")}
                 />
                 <div className="space-y-3 rounded-xl border border-sage-100 p-4 sm:col-span-2">
                   <p className="text-sm font-medium">Ba mẹ hai bên</p>
@@ -658,6 +782,66 @@ function AdminHome() {
               </div>
             )}
 
+            {tab === "uploads" && (
+              <div className="space-y-4">
+                <p className="text-sm text-ink/60">
+                  {uploads.length} ảnh trong thư mục upload. Ảnh đang được gắn ở
+                  đâu đó sẽ có nhãn — xoá là chỗ đó vỡ ảnh.
+                </p>
+
+                {uploads.length === 0 ? (
+                  <p className="text-sm text-ink/40">
+                    Chưa có ảnh nào được upload.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                    {uploads.map((item) => {
+                      const used = usageOf(item.url);
+                      return (
+                        <div
+                          key={item.filename}
+                          className="overflow-hidden rounded-xl border border-sage-100"
+                        >
+                          <div className="relative aspect-square bg-sage-100">
+                            <Image
+                              src={item.url}
+                              alt=""
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 45vw, 200px"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteUpload(item)}
+                              className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 text-blush-500 shadow transition hover:bg-white"
+                              aria-label={`Xoá ${item.filename}`}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          <div className="space-y-1 p-2.5 text-xs">
+                            <p className="truncate font-mono text-ink/50">
+                              {item.filename}
+                            </p>
+                            <p className="text-ink/40">
+                              {(item.size / 1024).toFixed(0)} KB
+                            </p>
+                            {used.length > 0 ? (
+                              <p className="text-sage-700">
+                                Đang dùng: {used.join(", ")}
+                              </p>
+                            ) : (
+                              <p className="text-ink/40">Chưa dùng ở đâu</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             {tab === "timeline" && (
               <div className="space-y-4">
                 {config.timeline.map((item, index) => (
@@ -688,7 +872,64 @@ function AdminHome() {
                         {...register(`timeline.${index}.description`)}
                         className="sm:col-span-2"
                       />
-                      <Input label="Ảnh (URL)" {...register(`timeline.${index}.image`)} />
+                      <div className="space-y-2 sm:col-span-2">
+                        <p className="text-sm font-medium text-ink">
+                          Ảnh của mốc ({photosOf(index).length}/
+                          {MAX_TIMELINE_PHOTOS}) — để trống nếu mốc chỉ có chữ
+                        </p>
+                        {photosOf(index).map((photo, photoIndex) => (
+                          <div key={photoIndex} className="flex items-center gap-2">
+                            <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-sage-100 bg-sage-100">
+                              {photo && (
+                                <Image
+                                  src={photo}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                  sizes="44px"
+                                />
+                              )}
+                            </span>
+                            <Input
+                              placeholder="Dán link ảnh, hoặc bấm Upload ảnh bên dưới"
+                              className="flex-1"
+                              {...register(
+                                `timeline.${index}.images.${photoIndex}`
+                              )}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeTimelinePhoto(index, photoIndex)}
+                              className="shrink-0 text-blush-500"
+                              aria-label={`Xoá ảnh ${photoIndex + 1}`}
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        ))}
+                        {photosOf(index).length < MAX_TIMELINE_PHOTOS && (
+                          <div className="flex flex-wrap items-center gap-4">
+                            <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-blush-500">
+                              <Upload size={14} /> Upload ảnh
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) =>
+                                  handleTimelinePhotoUpload(e, index)
+                                }
+                              />
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => addTimelinePhoto(index)}
+                              className="text-sm text-ink/50 transition hover:text-ink"
+                            >
+                              hoặc dán link có sẵn
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -768,11 +1009,10 @@ function AdminHome() {
                       <select
                         value={newGuestSide}
                         onChange={(e) =>
-                          setNewGuestSide(e.target.value as WeddingSide | "")
+                          setNewGuestSide(e.target.value as WeddingSide)
                         }
                         className="rounded-xl border border-sage-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blush-300 focus:ring-2 focus:ring-blush-100"
                       >
-                        <option value="">Cả hai nhà</option>
                         <option value="groom">Nhà trai</option>
                         <option value="bride">Nhà gái</option>
                       </select>
@@ -801,7 +1041,7 @@ function AdminHome() {
                           <p className="flex flex-wrap items-center gap-2 font-medium">
                             {guest.name}
                             <span className="rounded-full bg-sage-100 px-2 py-0.5 text-xs font-normal text-ink/60">
-                              {guest.side ? SIDE_LABEL[guest.side] : "Cả hai nhà"}
+                              {SIDE_LABEL[guest.side ?? "groom"]}
                             </span>
                           </p>
                           {guest.note && (
@@ -813,17 +1053,15 @@ function AdminHome() {
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <select
-                            value={guest.side ?? ""}
+                            // Khách cũ chưa gán nhà vốn đã được hiểu là nhà trai
+                            // (resolveSide), nên hiện đúng như vậy.
+                            value={guest.side ?? "groom"}
                             onChange={(e) =>
-                              handleGuestSide(
-                                guest,
-                                e.target.value as WeddingSide | ""
-                              )
+                              handleGuestSide(guest, e.target.value as WeddingSide)
                             }
                             className="rounded-lg border border-sage-300 bg-white px-2 py-1 text-xs outline-none"
                             aria-label="Mời dự tiệc nhà"
                           >
-                            <option value="">Cả hai nhà</option>
                             <option value="groom">Nhà trai</option>
                             <option value="bride">Nhà gái</option>
                           </select>
