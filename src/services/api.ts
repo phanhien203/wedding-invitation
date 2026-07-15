@@ -2,6 +2,7 @@ import axios from "axios";
 import type {
   WeddingConfig,
   Rsvp,
+  UploadedImage,
   Wish,
   Guest,
   WeddingSide,
@@ -9,6 +10,19 @@ import type {
 } from "@/types";
 
 const api = axios.create({ baseURL: "/api" });
+
+/**
+ * API trả lỗi dạng { error: "..." }, còn axios chỉ ném "Request failed with
+ * status code 400" — vô nghĩa với người dùng. Lôi message thật ra để hiện.
+ */
+export function apiErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    const detail = (error.response?.data as { error?: string } | undefined)
+      ?.error;
+    if (detail) return detail;
+  }
+  return fallback;
+}
 
 export async function fetchWeddingConfig(): Promise<WeddingConfig> {
   const { data } = await api.get<WeddingConfig>("/wedding");
@@ -40,8 +54,14 @@ export async function uploadImage(file: File): Promise<string> {
   return data.url;
 }
 
-export async function deleteImage(filename: string): Promise<void> {
-  await api.delete(`/upload/${filename}`);
+export async function fetchUploads(): Promise<UploadedImage[]> {
+  const { data } = await api.get<UploadedImage[]>("/upload");
+  return data;
+}
+
+/** `publicId` là id Cloudinary (có dấu "/") nên truyền qua query, không qua path. */
+export async function deleteImage(publicId: string): Promise<void> {
+  await api.delete("/upload", { params: { publicId } });
 }
 
 export async function uploadAudio(
@@ -58,7 +78,9 @@ export async function uploadAudio(
 }
 
 export async function submitRsvp(payload: {
-  slug: string;
+  /** Thiệp mời riêng. Không có thì phải kèm `name` (thiệp chung). */
+  slug?: string;
+  name?: string;
   attendance: Attendance;
   guests: number;
   message?: string;
@@ -108,7 +130,7 @@ export async function fetchGuests(): Promise<Guest[]> {
 export async function createGuest(payload: {
   name: string;
   note?: string;
-  side?: WeddingSide | "";
+  side?: WeddingSide;
 }): Promise<Guest> {
   const { data } = await api.post<Guest>("/guests", payload);
   return data;
@@ -116,7 +138,7 @@ export async function createGuest(payload: {
 
 export async function updateGuest(
   id: string,
-  payload: { name?: string; note?: string; side?: WeddingSide | "" }
+  payload: { name?: string; note?: string; side?: WeddingSide }
 ): Promise<Guest> {
   const { data } = await api.put<Guest>(`/guests/${id}`, payload);
   return data;

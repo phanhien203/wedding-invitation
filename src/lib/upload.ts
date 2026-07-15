@@ -1,7 +1,6 @@
 import path from "path";
-import { ALLOWED_IMAGE_TYPES } from "@/constants";
+import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/constants";
 
-const MAX_UPLOAD_MB = Number(process.env.NEXT_PUBLIC_MAX_UPLOAD_MB ?? 5);
 const MAX_AUDIO_MB = Number(process.env.NEXT_PUBLIC_MAX_AUDIO_MB ?? 15);
 
 // Tên file nhạc cố định: mỗi lần upload sẽ ghi đè file này nên nhạc mới
@@ -9,7 +8,7 @@ const MAX_AUDIO_MB = Number(process.env.NEXT_PUBLIC_MAX_AUDIO_MB ?? 15);
 const AUDIO_FILENAME = "wedding-song.mp3";
 
 export function getMaxUploadBytes(): number {
-  return MAX_UPLOAD_MB * 1024 * 1024;
+  return MAX_UPLOAD_BYTES;
 }
 
 export function getMaxAudioBytes(): number {
@@ -48,8 +47,12 @@ export function createUniqueFilename(originalName: string): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}${safeExt}`;
 }
 
+export function getUploadsDir(): string {
+  return path.join(process.cwd(), "public", "uploads");
+}
+
 export function getUploadPath(filename: string): string {
-  return path.join(process.cwd(), "public", "uploads", filename);
+  return path.join(getUploadsDir(), filename);
 }
 
 export function getPublicUploadUrl(filename: string): string {

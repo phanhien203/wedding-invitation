@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { isAdminRequest } from "@/lib/auth";
+import { MAX_WISH_LENGTH } from "@/constants";
 import { readWishes, writeWishes } from "@/lib/data";
 import { createId } from "@/utils/id";
 import type { Wish } from "@/types";
@@ -24,10 +25,17 @@ export default async function handler(
       return res.status(400).json({ error: "Name and message are required" });
     }
 
+    const trimmed = String(message).trim();
+    if (trimmed.length > MAX_WISH_LENGTH) {
+      return res
+        .status(400)
+        .json({ error: `Lời chúc tối đa ${MAX_WISH_LENGTH} ký tự` });
+    }
+
     const wish: Wish = {
       id: createId(),
       name: String(name).trim(),
-      message: String(message).trim(),
+      message: trimmed,
       createdAt: new Date().toISOString(),
     };
 

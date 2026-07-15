@@ -7,6 +7,10 @@
     scroll-behavior: smooth;
     /* Tăng cỡ chữ gốc một chút để text dễ đọc hơn, nhất là trên mobile. */
     font-size: 112.5%;
+    /* Chrome tự cuộn để giữ mỏ neo của nó khi một khối phình/co (scroll
+       anchoring) — phải tắt ở chính scroll container, đặt trên thẻ con vô ích.
+       Chỗ nào cần giữ vị trí thì tự níu, xem useKeepInPlace ở WishesSection. */
+    overflow-anchor: none;
   }
 
   body {

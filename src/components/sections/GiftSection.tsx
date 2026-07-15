@@ -15,7 +15,7 @@ export default function GiftSection({ gift }: GiftSectionProps) {
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="mx-auto flex max-w-md flex-col items-center gap-6 rounded-2xl border border-sage-100 bg-white p-8 shadow-sm"
+        className="mx-auto flex max-w-md flex-col items-center gap-6 rounded-2xl border border-sage-100 bg-white p-6 shadow-sm sm:p-8"
       >
         {gift.qrImage && (
           <div className="relative h-48 w-48 overflow-hidden rounded-xl">
@@ -36,12 +36,21 @@ export default function GiftSection({ gift }: GiftSectionProps) {
             <span className="text-ink/50">Chủ tài khoản:</span>{" "}
             {gift.accountName}
           </p>
-          <p className="flex items-center justify-center gap-2">
-            <span className="text-ink/50">Số tài khoản:</span>
+          <p>
+            <span className="text-ink/50">Số tài khoản:</span>{" "}
             <span className="font-medium">{gift.accountNumber}</span>
-            <CopyButton text={gift.accountNumber} />
           </p>
+          {/* Nút xuống hàng riêng: nhét chung hàng với nhãn + số thì trên mobile
+              cả nhãn lẫn chữ trong nút đều bị bẻ đôi. */}
+          <div className="pt-2">
+            <CopyButton text={gift.accountNumber} />
+          </div>
         </div>
+
+        <p className="max-w-sm border-t border-sage-100 pt-5 text-center text-sm italic leading-relaxed text-ink/60">
+          Mọi người hãy nhớ ghi rõ tên để vợ chồng mình dễ dàng phân biệt được sự
+          yêu thương này đến từ ai nhé
+        </p>
       </motion.div>
     </Section>
   );

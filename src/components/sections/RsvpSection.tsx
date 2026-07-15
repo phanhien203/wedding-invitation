@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,20 +7,31 @@ import Section from "@/components/ui/Section";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
-import { submitRsvp } from "@/services/api";
+import { apiErrorMessage, submitRsvp } from "@/services/api";
+import { MAX_RSVP_NAME_LENGTH } from "@/constants";
 import type { Rsvp } from "@/types";
 
-const schema = z.object({
-  attendance: z.enum(["yes", "no"]),
-  guests: z.coerce.number().min(1).max(20),
-  message: z.string().optional(),
-});
+/** Thiệp chung không biết khách là ai nên bắt tự điền tên; thiệp riêng thì thôi. */
+const makeSchema = (needsName: boolean) =>
+  z.object({
+    name: needsName
+      ? z
+          .string()
+          .trim()
+          .min(1, "Vui lòng nhập tên của bạn")
+          .max(MAX_RSVP_NAME_LENGTH, `Tối đa ${MAX_RSVP_NAME_LENGTH} ký tự`)
+      : z.string().optional(),
+    attendance: z.enum(["yes", "no"]),
+    guests: z.coerce.number().min(1).max(20),
+    message: z.string().optional(),
+  });
 
-type FormData = z.infer<typeof schema>;
+type FormData = z.infer<ReturnType<typeof makeSchema>>;
 
 interface RsvpSectionProps {
-  slug: string;
-  guestName: string;
+  /** Có = thiệp mời riêng theo ?to=. Không có = thiệp chung. */
+  slug?: string | null;
+  guestName?: string | null;
   initialRsvp: Rsvp | null;
 }
 
@@ -29,6 +40,7 @@ export default function RsvpSection({
   guestName,
   initialRsvp,
 }: RsvpSectionProps) {
+  const needsName = !slug;
   const [current, setCurrent] = useState<Rsvp | null>(initialRsvp);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -39,8 +51,9 @@ export default function RsvpSection({
     watch,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(useMemo(() => makeSchema(needsName), [needsName])),
     defaultValues: {
+      name: "",
       attendance: initialRsvp?.attendance ?? "yes",
       guests: initialRsvp && initialRsvp.guests > 0 ? initialRsvp.guests : 1,
       message: initialRsvp?.message ?? "",
@@ -54,15 +67,15 @@ export default function RsvpSection({
     setSaved(false);
     try {
       const rsvp = await submitRsvp({
-        slug,
+        ...(slug ? { slug } : { name: data.name }),
         attendance: data.attendance,
         guests: data.attendance === "yes" ? data.guests : 0,
         message: data.message ?? "",
       });
       setCurrent(rsvp);
       setSaved(true);
-    } catch {
-      setError("Gửi xác nhận thất bại. Vui lòng thử lại.");
+    } catch (err) {
+      setError(apiErrorMessage(err, "Gửi xác nhận thất bại. Vui lòng thử lại."));
     }
   };
 
@@ -75,9 +88,14 @@ export default function RsvpSection({
         className="mx-auto max-w-lg rounded-2xl border border-sage-100 bg-white p-6 shadow-sm sm:p-8"
       >
         <p className="mb-5 text-center text-sm text-ink/60">
-          Kính gửi{" "}
-          <span className="font-medium text-ink">{guestName}</span>, mong bạn
-          dành chút thời gian xác nhận tham dự.
+          {guestName ? (
+            <>
+              Kính gửi <span className="font-medium text-ink">{guestName}</span>,
+              mong bạn dành chút thời gian xác nhận tham dự.
+            </>
+          ) : (
+            "Mong bạn dành chút thời gian xác nhận tham dự cùng chúng mình."
+          )}
         </p>
 
         {current && (
@@ -93,6 +111,16 @@ export default function RsvpSection({
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {needsName && (
+            <Input
+              label="Tên của bạn"
+              placeholder="Vd: Gia đình anh Nam"
+              maxLength={MAX_RSVP_NAME_LENGTH}
+              {...register("name")}
+              error={errors.name?.message}
+            />
+          )}
+
           <div className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-ink">
               Bạn sẽ tham dự chứ?
