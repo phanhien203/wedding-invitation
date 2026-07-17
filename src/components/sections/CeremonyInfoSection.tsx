@@ -118,7 +118,7 @@ export default function CeremonyInfoSection({
           Lễ thành hôn của con chúng tôi
         </p>
 
-        <h3 className="font-serif text-3xl font-semibold text-sage-700 sm:text-4xl">
+        <h3 className="font-calligraphy text-4xl leading-tight tracking-wider text-sage-700 sm:text-5xl">
           {groom.name}
         </h3>
         {groom.role && (
@@ -129,7 +129,7 @@ export default function CeremonyInfoSection({
 
         <p className="my-3 font-script text-3xl text-gold">&amp;</p>
 
-        <h3 className="font-serif text-3xl font-semibold text-sage-700 sm:text-4xl">
+        <h3 className="font-calligraphy text-4xl leading-tight tracking-wider text-sage-700 sm:text-5xl">
           {bride.name}
         </h3>
         {bride.role && (

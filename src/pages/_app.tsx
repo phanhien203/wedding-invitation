@@ -9,6 +9,7 @@ import {
   Cormorant_Garamond,
   Be_Vietnam_Pro,
   Dancing_Script,
+  Great_Vibes,
 } from "next/font/google";
 
 const serif = Cormorant_Garamond({
@@ -29,10 +30,16 @@ const script = Dancing_Script({
   variable: "--font-script",
 });
 
+const calligraphy = Great_Vibes({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400"],
+  variable: "--font-calligraphy",
+});
+
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <main
-      className={`${serif.variable} ${sans.variable} ${script.variable} font-sans`}
+      className={`${serif.variable} ${sans.variable} ${script.variable} ${calligraphy.variable} font-sans`}
     >
       <Component {...pageProps} />
     </main>
