@@ -13,7 +13,7 @@ interface InvitationIntroProps {
   inviteeName?: string | null;
 }
 
-const CURTAIN = { duration: 1.1, ease: [0.76, 0, 0.24, 1] as const };
+const CURTAIN = { duration: 0.8, ease: [0.76, 0, 0.24, 1] as const };
 
 // Nền xanh rừng đậm cho màn intro (kiểu vignette: sáng nhẹ ở giữa, tối dần ra
 // mép). Dùng cho từng nửa rèm phủ full viewport nên hai nửa ghép liền mạch.
@@ -52,7 +52,7 @@ export default function InvitationIntro({
     setVolume(0.5);
     setPlaying(true);
     setBlooming(true);
-    window.setTimeout(() => setOpening(true), 1800);
+    window.setTimeout(() => setOpening(true), 700);
   };
 
   // Khoá cuộn nền khi màn intro còn hiển thị, và luôn bắt đầu từ đầu trang

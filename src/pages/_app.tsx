@@ -10,6 +10,7 @@ import {
   Be_Vietnam_Pro,
   Dancing_Script,
   Great_Vibes,
+  Playfair_Display,
 } from "next/font/google";
 
 const serif = Cormorant_Garamond({
@@ -36,10 +37,17 @@ const calligraphy = Great_Vibes({
   variable: "--font-calligraphy",
 });
 
+// Font hiển thị số (giờ, ngày, năm) — số lining rõ nét, sang trọng.
+const display = Playfair_Display({
+  subsets: ["latin", "vietnamese"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+});
+
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <main
-      className={`${serif.variable} ${sans.variable} ${script.variable} ${calligraphy.variable} font-sans`}
+      className={`${serif.variable} ${sans.variable} ${script.variable} ${calligraphy.variable} ${display.variable} font-sans`}
     >
       <Component {...pageProps} />
     </main>

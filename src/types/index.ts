@@ -40,8 +40,14 @@ export type WeddingSide = "groom" | "bride";
 export interface EventInfo {
   title: string;
   date: string;
+  /** Giờ làm lễ (dùng ở phần Thông tin lễ cưới). */
   time: string;
+  /** Giờ dự tiệc (dùng ở phần Thông tin bữa tiệc). Trống thì lấy theo `time`. */
+  partyTime?: string;
+  /** Địa điểm làm lễ (dùng ở phần Thông tin lễ cưới). */
   address: string;
+  /** Địa điểm dự tiệc (dùng ở phần Thông tin bữa tiệc). Trống thì lấy theo `address`. */
+  partyAddress?: string;
   /** Sự kiện thuộc nhà trai/nhà gái. Không có = hiển thị cho cả hai. */
   side?: WeddingSide;
 }
@@ -64,11 +70,16 @@ export interface Venues {
   bride: Venue;
 }
 
-export interface GiftInfo {
+export interface GiftAccount {
   qrImage: string;
   bankName: string;
   accountName: string;
   accountNumber: string;
+}
+
+export interface GiftInfo {
+  groom: GiftAccount;
+  bride: GiftAccount;
 }
 
 export interface WeddingConfig {

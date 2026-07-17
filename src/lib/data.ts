@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { getDb } from "@/lib/mongodb";
-import type { WeddingConfig, Rsvp, Wish, Guest } from "@/types";
+import type { WeddingConfig, Rsvp, Wish, Guest, GiftAccount } from "@/types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const COLLECTION = "store";
@@ -73,6 +73,45 @@ function normalizeTimeline(config: WeddingConfig): WeddingConfig {
   };
 }
 
+const emptyAccount = (): GiftAccount => ({
+  qrImage: "",
+  bankName: "",
+  accountName: "",
+  accountNumber: "",
+});
+
+/**
+ * Gift đời đầu chỉ có MỘT tài khoản (các field phẳng qrImage/bankName/...). Nay
+ * tách thành 2 tài khoản groom/bride. Chuẩn hoá ngay lúc đọc: dạng cũ gán cho
+ * nhà trai, nhà gái để trống; bản ghi tự lên dạng mới sau lần lưu đầu trong admin.
+ */
+function normalizeGift(config: WeddingConfig): WeddingConfig {
+  const raw = config.gift as unknown as
+    | (Partial<GiftAccount> & Partial<WeddingConfig["gift"]>)
+    | undefined;
+  if (!raw) {
+    return { ...config, gift: { groom: emptyAccount(), bride: emptyAccount() } };
+  }
+  // Đã ở dạng mới (có groom/bride).
+  if (raw.groom || raw.bride) {
+    return {
+      ...config,
+      gift: {
+        groom: { ...emptyAccount(), ...(raw.groom ?? {}) },
+        bride: { ...emptyAccount(), ...(raw.bride ?? {}) },
+      },
+    };
+  }
+  // Dạng cũ (phẳng) → gán cho nhà trai.
+  return {
+    ...config,
+    gift: {
+      groom: { ...emptyAccount(), ...raw },
+      bride: emptyAccount(),
+    },
+  };
+}
+
 export async function readWeddingConfig(): Promise<WeddingConfig> {
   const config =
     (await readData<WeddingConfig>("wedding", "wedding.json", null)) ??
@@ -82,7 +121,7 @@ export async function readWeddingConfig(): Promise<WeddingConfig> {
       "Missing wedding config: expected MongoDB 'wedding' or data/wedding.json."
     );
   }
-  return normalizeTimeline(config);
+  return normalizeGift(normalizeTimeline(config));
 }
 
 export async function writeWeddingConfig(config: WeddingConfig): Promise<void> {

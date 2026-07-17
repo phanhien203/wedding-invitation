@@ -9,7 +9,6 @@ import LoveStorySection from "@/components/sections/LoveStorySection";
 import GallerySection from "@/components/sections/GallerySection";
 import EventSection from "@/components/sections/EventSection";
 import MapSection from "@/components/sections/MapSection";
-import ScheduleSection from "@/components/sections/ScheduleSection";
 import GiftSection from "@/components/sections/GiftSection";
 import RsvpSection from "@/components/sections/RsvpSection";
 import WishesSection from "@/components/sections/WishesSection";
@@ -98,7 +97,6 @@ export default function Invitation({
           weddingDate={displayDate}
         />
         <MapSection venues={wedding.venues} side={inviteeSide} />
-        <ScheduleSection schedule={wedding.schedule ?? []} />
         <GiftSection gift={wedding.gift} />
         {/* Thiệp chung cũng xác nhận được, chỉ khác là khách phải tự điền tên. */}
         <RsvpSection

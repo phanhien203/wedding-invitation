@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { useForm, type UseFormReturn } from "react-hook-form";
+import {
+  useForm,
+  type UseFormReturn,
+  type UseFormRegister,
+} from "react-hook-form";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import Image from "next/image";
@@ -79,6 +83,7 @@ function AdminHome() {
   const [addingGuest, setAddingGuest] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [qrCropSrc, setQrCropSrc] = useState<string | null>(null);
+  const [qrCropSide, setQrCropSide] = useState<"groom" | "bride">("groom");
   const [audioUploading, setAudioUploading] = useState(false);
   const [audioError, setAudioError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -245,9 +250,13 @@ function AdminHome() {
     }
   };
 
-  const handleQrSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleQrSelect = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    side: "groom" | "bride"
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setQrCropSide(side);
     const reader = new FileReader();
     reader.onload = () => setQrCropSrc(reader.result as string);
     reader.readAsDataURL(file);
@@ -260,7 +269,10 @@ function AdminHome() {
     if (!url) return;
     applyConfig((current) => ({
       ...current,
-      gift: { ...current.gift, qrImage: url },
+      gift: {
+        ...current.gift,
+        [qrCropSide]: { ...current.gift[qrCropSide], qrImage: url },
+      },
     }));
     setQrCropSrc(null);
   };
@@ -424,7 +436,8 @@ function AdminHome() {
     }
     if (current.bride?.photo === url) where.push("Ảnh cô dâu");
     if (current.groom?.photo === url) where.push("Ảnh chú rể");
-    if (current.gift?.qrImage === url) where.push("QR mừng cưới");
+    if (current.gift?.groom?.qrImage === url) where.push("QR nhà trai");
+    if (current.gift?.bride?.qrImage === url) where.push("QR nhà gái");
     return where;
   };
 
@@ -670,32 +683,25 @@ function AdminHome() {
                     />
                   </label>
                 </div>
-                <div>
-                  <Input
-                    label="QR mừng cưới (URL)"
-                    {...register("gift.qrImage")}
-                  />
-                  <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm text-blush-500">
-                    <Upload size={14} /> Upload &amp; cắt ảnh QR
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleQrSelect}
+                <div className="space-y-3 rounded-xl border border-sage-100 p-4 sm:col-span-2">
+                  <p className="text-sm font-medium">Tài khoản mừng cưới</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <GiftAccountFields
+                      side="groom"
+                      label="Nhà trai"
+                      register={register}
+                      qrImage={config.gift?.groom?.qrImage}
+                      onQrSelect={handleQrSelect}
                     />
-                  </label>
-                  {config.gift?.qrImage && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={config.gift.qrImage}
-                      alt="QR mừng cưới"
-                      className="mt-2 h-28 w-28 rounded-lg border border-sage-100 object-contain"
+                    <GiftAccountFields
+                      side="bride"
+                      label="Nhà gái"
+                      register={register}
+                      qrImage={config.gift?.bride?.qrImage}
+                      onQrSelect={handleQrSelect}
                     />
-                  )}
+                  </div>
                 </div>
-                <Input label="Ngân hàng" {...register("gift.bankName")} />
-                <Input label="Chủ TK" {...register("gift.accountName")} />
-                <Input label="Số TK" {...register("gift.accountNumber")} />
                 <VenueFields
                   side="groom"
                   label="Nhà Trai"
@@ -739,12 +745,23 @@ function AdminHome() {
                         {...register(`events.${index}.date`)}
                       />
                       <Input
-                        label="Giờ"
+                        label="Giờ làm lễ"
                         {...register(`events.${index}.time`)}
                       />
                       <Input
-                        label="Địa chỉ"
+                        label="Giờ dự tiệc"
+                        placeholder="Trống = giống giờ làm lễ"
+                        {...register(`events.${index}.partyTime`)}
+                      />
+                      <Input
+                        label="Địa điểm làm lễ"
                         {...register(`events.${index}.address`)}
+                        className="sm:col-span-2"
+                      />
+                      <Input
+                        label="Địa điểm dự tiệc"
+                        placeholder="Trống = giống địa điểm làm lễ"
+                        {...register(`events.${index}.partyAddress`)}
                         className="sm:col-span-2"
                       />
                     </div>
@@ -1227,6 +1244,52 @@ function AdminHome() {
         />
       </AdminLayout>
     </>
+  );
+}
+
+function GiftAccountFields({
+  side,
+  label,
+  register,
+  qrImage,
+  onQrSelect,
+}: {
+  side: "groom" | "bride";
+  label: string;
+  register: UseFormRegister<WeddingConfig>;
+  qrImage?: string;
+  onQrSelect: (
+    e: React.ChangeEvent<HTMLInputElement>,
+    side: "groom" | "bride"
+  ) => void;
+}) {
+  return (
+    <div className="space-y-3 rounded-lg border border-sage-100 p-3">
+      <p className="text-sm font-medium">{label}</p>
+      <div>
+        <Input label="QR (URL)" {...register(`gift.${side}.qrImage`)} />
+        <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-sm text-blush-500">
+          <Upload size={14} /> Upload &amp; cắt ảnh QR
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => onQrSelect(e, side)}
+          />
+        </label>
+        {qrImage && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={qrImage}
+            alt={`QR ${label}`}
+            className="mt-2 h-28 w-28 rounded-lg border border-sage-100 object-contain"
+          />
+        )}
+      </div>
+      <Input label="Ngân hàng" {...register(`gift.${side}.bankName`)} />
+      <Input label="Chủ TK" {...register(`gift.${side}.accountName`)} />
+      <Input label="Số TK" {...register(`gift.${side}.accountNumber`)} />
+    </div>
   );
 }
 

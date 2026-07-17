@@ -73,10 +73,18 @@
     }
   },
   "gift": {
-    "qrImage": "/images/qr-code.jpg",
-    "bankName": "Vietcombank",
-    "accountName": "NGUYEN QUOC HUY",
-    "accountNumber": "0123456789"
+    "groom": {
+      "qrImage": "/images/qr-code.jpg",
+      "bankName": "Vietcombank",
+      "accountName": "NGUYEN QUOC HUY",
+      "accountNumber": "0123456789"
+    },
+    "bride": {
+      "qrImage": "",
+      "bankName": "",
+      "accountName": "",
+      "accountNumber": ""
+    }
   },
   "music": "/audio/wedding-song.mp3"
 }

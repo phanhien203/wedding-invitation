@@ -14,17 +14,19 @@ function ContactBlock({ person, label }: { person: Person; label: string }) {
 
   return (
     <div className="text-center">
-      <p className="text-xs uppercase tracking-[0.25em] text-gold">{label}</p>
-      <p className="mt-1 font-serif text-lg font-semibold text-sage-700">
+      <p className="text-[10px] uppercase tracking-[0.15em] text-gold sm:text-xs sm:tracking-[0.25em]">
+        {label}
+      </p>
+      <p className="mt-1 font-serif text-base font-semibold text-sage-700 sm:text-lg">
         {person.name}
       </p>
-      <div className="mt-2 flex flex-col items-center gap-1.5 text-sm">
+      <div className="mt-2 flex flex-col items-center gap-1.5 text-xs sm:text-sm">
         {person.phone && (
           <a
             href={`tel:${person.phone.replace(/\s/g, "")}`}
-            className="flex items-center gap-2 text-ink/70 transition hover:text-sage-700"
+            className="flex items-center gap-1.5 text-ink/70 transition hover:text-sage-700 sm:gap-2"
           >
-            <Phone size={15} className="shrink-0" />
+            <Phone size={13} className="shrink-0 sm:h-[15px] sm:w-[15px]" />
             {person.phone}
           </a>
         )}
@@ -33,9 +35,9 @@ function ContactBlock({ person, label }: { person: Person; label: string }) {
             href={person.facebook}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-ink/70 transition hover:text-sage-700"
+            className="flex items-center gap-1.5 text-ink/70 transition hover:text-sage-700 sm:gap-2"
           >
-            <Facebook size={15} className="shrink-0" />
+            <Facebook size={13} className="shrink-0 sm:h-[15px] sm:w-[15px]" />
             Facebook
           </a>
         )}
@@ -64,7 +66,7 @@ export default function FooterSection({
             <h2 className="mb-5 font-serif text-xl font-semibold text-ink">
               Thông tin liên hệ
             </h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
               <ContactBlock person={groom} label="Chú rể" />
               <ContactBlock person={bride} label="Cô dâu" />
             </div>

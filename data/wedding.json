@@ -73,14 +73,18 @@
       "title": "Lễ Vu Quy",
       "date": "25/07/2026",
       "time": "09:00",
+      "partyTime": "11:00",
       "address": "Nhà Văn Hóa Hà My Đông A",
+      "partyAddress": "",
       "side": "bride"
     },
     {
       "title": "Lễ Thành Hôn",
       "date": "02/08/2026",
       "time": "09:00",
+      "partyTime": "11:00",
       "address": "Nhà Văn Hóa Bình Kỳ 1",
+      "partyAddress": "",
       "side": "groom"
     }
   ],
@@ -101,10 +105,18 @@
     }
   },
   "gift": {
-    "qrImage": "/uploads/1783973003905-z5uorcw.png",
-    "bankName": "TPBank",
-    "accountName": "THAI DUY DAT",
-    "accountNumber": "02746971101"
+    "groom": {
+      "qrImage": "/uploads/1783973003905-z5uorcw.png",
+      "bankName": "TPBank",
+      "accountName": "THAI DUY DAT",
+      "accountNumber": "02746971101"
+    },
+    "bride": {
+      "qrImage": "",
+      "bankName": "",
+      "accountName": "",
+      "accountNumber": ""
+    }
   },
   "music": "/audio/wedding-song.mp3",
   "parents": {

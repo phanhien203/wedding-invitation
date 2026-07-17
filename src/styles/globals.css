@@ -38,6 +38,6 @@
 
   .gallery-swiper .swiper-button-next,
   .gallery-swiper .swiper-button-prev {
-    @apply text-sage-700;
+    @apply hidden text-sage-700 sm:flex;
   }
 }

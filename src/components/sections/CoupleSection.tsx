@@ -1,6 +1,8 @@
+import { useEffect, useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import Section from "@/components/ui/Section";
+import { cn } from "@/lib/cn";
 import type { Person } from "@/types";
 
 interface CoupleSectionProps {
@@ -8,6 +10,48 @@ interface CoupleSectionProps {
   groom: Person;
   brideName: string;
   groomName: string;
+}
+
+// useLayoutEffect trên server sẽ cảnh báo; dùng useEffect khi SSR.
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+/**
+ * Tên luôn nằm trên MỘT hàng ở mọi độ phân giải: ép không xuống dòng và tự thu
+ * nhỏ font vừa khít bề ngang cột chứa nó.
+ */
+function FitName({
+  children,
+  className,
+}: {
+  children: string;
+  className?: string;
+}) {
+  const ref = useRef<HTMLHeadingElement>(null);
+
+  useIsoLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      // Bỏ cỡ đã ép để đo lại theo cỡ gốc (responsive từ class Tailwind).
+      el.style.fontSize = "";
+      const base = parseFloat(getComputedStyle(el).fontSize);
+      const avail = el.clientWidth;
+      const natural = el.scrollWidth;
+      if (avail > 0 && natural > avail) {
+        el.style.fontSize = `${base * (avail / natural)}px`;
+      }
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [children]);
+
+  return (
+    <h3 ref={ref} className={cn("overflow-hidden whitespace-nowrap", className)}>
+      {children}
+    </h3>
+  );
 }
 
 function TiltPhoto({
@@ -56,9 +100,9 @@ export default function CoupleSection({
             <p className="mb-1 text-xs uppercase tracking-[0.3em] text-gold">
               {groom.role ?? "Chú rể"}
             </p>
-            <h3 className="font-script text-4xl leading-tight text-sage-700 sm:text-5xl">
+            <FitName className="font-script text-4xl leading-tight text-sage-700 sm:text-5xl">
               {groomName}
-            </h3>
+            </FitName>
             <p className="mt-2 text-sm leading-relaxed text-ink/55">
               {groom.intro}
             </p>
@@ -71,16 +115,16 @@ export default function CoupleSection({
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="relative z-10 -mt-6 flex flex-row-reverse items-center justify-center gap-6 sm:-mt-10 sm:gap-10"
+          className="relative z-10 mt-10 flex flex-row-reverse items-center justify-center gap-6 sm:mt-12 sm:gap-10"
         >
           <TiltPhoto src={bride.photo} alt={bride.name} rotate={5} />
           <div className="max-w-[45%] text-right">
             <p className="mb-1 text-xs uppercase tracking-[0.3em] text-gold">
               {bride.role ?? "Cô dâu"}
             </p>
-            <h3 className="font-script text-4xl leading-tight text-sage-700 sm:text-5xl">
+            <FitName className="font-script text-4xl leading-tight text-sage-700 sm:text-5xl">
               {brideName}
-            </h3>
+            </FitName>
             <p className="mt-2 text-sm leading-relaxed text-ink/55">
               {bride.intro}
             </p>

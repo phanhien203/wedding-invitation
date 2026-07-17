@@ -90,11 +90,16 @@ function EventBlock({
       className="text-center"
     >
       <p className="text-sm uppercase tracking-[0.25em] text-ink/60">
-        {event.title} sẽ diễn ra vào lúc
+        Bữa tiệc sẽ diễn ra vào lúc
       </p>
-      <p className="mt-2 font-serif text-4xl font-semibold text-sage-700">
-        {event.time}
+      <p className="mt-2 font-display text-4xl font-semibold text-sage-700">
+        {event.partyTime || event.time}
       </p>
+      {(event.partyAddress || event.address) && (
+        <p className="mt-3 font-serif text-xl font-semibold uppercase tracking-wide text-sage-700 lining-nums">
+          {event.partyAddress || event.address}
+        </p>
+      )}
 
       {sl && (
         <>
@@ -103,7 +108,7 @@ function EventBlock({
               {sl.weekday}
             </span>
             <span className="h-8 w-px bg-gold/40" />
-            <span className="font-serif text-4xl font-semibold text-sage-700">
+            <span className="font-display text-4xl font-semibold text-sage-700">
               {pad(sl.day)}
             </span>
             <span className="h-8 w-px bg-gold/40" />
@@ -111,9 +116,9 @@ function EventBlock({
               Tháng {pad(sl.month)}
             </span>
           </div>
-          <p className="mt-3 font-serif text-xl text-sage-700">{sl.year}</p>
+          <p className="mt-3 font-display text-xl text-sage-700">{sl.year}</p>
           <p className="mt-2 text-xs uppercase tracking-[0.2em] text-ink/50">
-            (Tức ngày {sl.lunarText})
+            (Nhằm ngày {sl.lunarText})
           </p>
           {countdownDate && (
             <Countdown
@@ -143,7 +148,7 @@ export default function EventSection({
   if (!shown.length) return null;
 
   return (
-    <Section title="Thông tin sự kiện" subtitle="Save the date">
+    <Section title="Thông tin bữa tiệc" subtitle="Save the date">
       <div className="mx-auto flex max-w-xl flex-col gap-14">
         {shown.map((event, index) => (
           <EventBlock

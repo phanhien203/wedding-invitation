@@ -30,6 +30,7 @@ const config: Config = {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         script: ["var(--font-script)", "cursive"],
         calligraphy: ["var(--font-calligraphy)", "cursive"],
+        display: ["var(--font-display)", "Georgia", "serif"],
       },
       borderRadius: {
         xl: "1rem",
