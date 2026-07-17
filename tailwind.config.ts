@@ -51,12 +51,17 @@ const config: Config = {
           from: { transform: "translateX(-16px) rotate(-25deg)" },
           to: { transform: "translateX(16px) rotate(35deg)" },
         },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.6s ease-out both",
         "bounce-slow": "bounceslow 2s ease-in-out infinite",
         "leaf-fall": "leaf-fall 10s linear infinite",
         "leaf-sway": "leaf-sway 3s ease-in-out infinite alternate",
+        "spin-slow": "spin-slow 4s linear infinite",
       },
     },
   },

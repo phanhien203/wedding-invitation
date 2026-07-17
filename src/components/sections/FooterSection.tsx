@@ -1,10 +1,8 @@
 import { Facebook, Phone } from "lucide-react";
-import MusicPlayer from "@/components/common/MusicPlayer";
 import Container from "@/components/ui/Container";
 import type { Person } from "@/types";
 
 interface FooterSectionProps {
-  musicSrc: string;
   brideName: string;
   groomName: string;
   bride: Person;
@@ -47,7 +45,6 @@ function ContactBlock({ person, label }: { person: Person; label: string }) {
 }
 
 export default function FooterSection({
-  musicSrc,
   brideName,
   groomName,
   bride,
@@ -59,8 +56,6 @@ export default function FooterSection({
   return (
     <footer className="border-t border-sage-100 bg-white py-10">
       <Container className="flex flex-col items-center gap-6 text-center">
-        <MusicPlayer src={musicSrc} />
-
         {hasContact && (
           <div className="w-full max-w-lg border-y border-sage-100 py-6">
             <p className="mb-1.5 text-xs uppercase tracking-[0.2em] text-gold">

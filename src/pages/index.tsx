@@ -14,6 +14,7 @@ import GiftSection from "@/components/sections/GiftSection";
 import RsvpSection from "@/components/sections/RsvpSection";
 import WishesSection from "@/components/sections/WishesSection";
 import FooterSection from "@/components/sections/FooterSection";
+import MusicPlayer from "@/components/common/MusicPlayer";
 import {
   readGuests,
   readRsvps,
@@ -107,13 +108,15 @@ export default function Invitation({
         />
         <WishesSection initialWishes={wishes} inviteeName={inviteeName} />
         <FooterSection
-          musicSrc={wedding.music}
           brideName={wedding.brideName}
           groomName={wedding.groomName}
           bride={wedding.bride}
           groom={wedding.groom}
         />
       </MainLayout>
+
+      {/* Nút nhạc nổi kiểu đĩa than — luôn hiển thị góc dưới phải */}
+      <MusicPlayer src={wedding.music} position="right" />
     </>
   );
 }
